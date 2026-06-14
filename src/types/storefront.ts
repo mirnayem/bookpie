@@ -65,3 +65,36 @@ export type AppPromoContent = {
   ctaImage: string;
   phoneImage: string;
 };
+
+export type DirectoryEntry = {
+  id: string;
+  name: string;
+  image: string;
+  href: string;
+};
+
+export type CampaignPage = {
+  id: string;
+  title: string;
+  href: string;
+  activeNav: string;
+  hero: PromoBanner;
+  squarePromos?: PromoBanner[];
+  categoryTiles?: PromoBanner[];
+  categoryRail?: Category[];
+  sections: ProductSection[];
+};
+
+export type ListingFilter = {
+  title: string;
+  options: string[];
+};
+
+export type ListingPage = {
+  id: string;
+  title: string;
+  activeNav: string;
+  tags: string[];
+  filters: ListingFilter[];
+  products: Product[];
+};

@@ -22,16 +22,22 @@ export function SiteHeader() {
         </div>
         <SearchBar className="hidden flex-1 md:block lg:mx-10" />
         <div className="ml-auto flex items-center gap-1">
-          <Button variant="ghost" size="icon" aria-label="Wishlist">
-            <Heart className="h-5 w-5" aria-hidden="true" />
+          <Button variant="ghost" size="icon" aria-label="Wishlist" asChild>
+            <Link href="/wishlist">
+              <Heart className="h-5 w-5" aria-hidden="true" />
+            </Link>
           </Button>
-          <Button variant="ghost" size="icon" aria-label="Shopping bag">
-            <ShoppingBag className="h-5 w-5" aria-hidden="true" />
+          <Button variant="ghost" size="icon" aria-label="Shopping bag" asChild>
+            <Link href="/cart">
+              <ShoppingBag className="h-5 w-5" aria-hidden="true" />
+            </Link>
           </Button>
-          <Button variant="ghost" size="icon" aria-label="Account">
-            <UserRound className="h-5 w-5" aria-hidden="true" />
+          <Button variant="ghost" size="icon" aria-label="Account" asChild>
+            <Link href="/signin">
+              <UserRound className="h-5 w-5" aria-hidden="true" />
+            </Link>
           </Button>
-          <Link href="/login" className="hidden text-sm font-medium text-foreground/80 hover:text-primary md:inline">
+          <Link href="/signin" className="hidden text-sm font-medium text-foreground/80 hover:text-primary md:inline">
             Sign In
           </Link>
         </div>

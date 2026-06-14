@@ -97,3 +97,90 @@ export function makePhoneMockup() {
     </svg>
   `);
 }
+
+export function makeWidePromo(title: string, subtitle: string, color: string, accent: string) {
+  return encodeSvg(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="1240" height="250" viewBox="0 0 1240 250">
+      <defs>
+        <linearGradient id="promo" x1="0" x2="1">
+          <stop offset="0" stop-color="${color}"/>
+          <stop offset="1" stop-color="${accent}"/>
+        </linearGradient>
+      </defs>
+      <rect width="1240" height="250" rx="8" fill="url(#promo)"/>
+      <circle cx="1060" cy="108" r="122" fill="rgba(255,255,255,.16)"/>
+      <rect x="70" y="42" width="132" height="166" rx="8" fill="rgba(255,255,255,.86)"/>
+      <rect x="224" y="64" width="128" height="142" rx="8" fill="rgba(255,255,255,.3)"/>
+      <rect x="372" y="82" width="105" height="120" rx="8" fill="rgba(255,255,255,.22)"/>
+      <text x="610" y="100" text-anchor="middle" font-family="Arial, sans-serif" font-size="42" font-weight="800" fill="#fff">${title}</text>
+      <text x="610" y="154" text-anchor="middle" font-family="Arial, sans-serif" font-size="25" font-weight="700" fill="rgba(255,255,255,.92)">${subtitle}</text>
+    </svg>
+  `);
+}
+
+export function makeSquarePromo(title: string, subtitle: string, color: string, accent: string) {
+  return encodeSvg(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="420" height="420" viewBox="0 0 420 420">
+      <defs>
+        <linearGradient id="square" x1="0" x2="1" y1="0" y2="1">
+          <stop offset="0" stop-color="${color}"/>
+          <stop offset="1" stop-color="${accent}"/>
+        </linearGradient>
+      </defs>
+      <rect width="420" height="420" rx="10" fill="url(#square)"/>
+      <circle cx="330" cy="88" r="78" fill="rgba(255,255,255,.18)"/>
+      <rect x="44" y="216" width="86" height="130" rx="6" fill="rgba(255,255,255,.82)"/>
+      <rect x="152" y="190" width="86" height="156" rx="6" fill="rgba(255,255,255,.72)"/>
+      <rect x="260" y="226" width="86" height="120" rx="6" fill="rgba(255,255,255,.62)"/>
+      <text x="36" y="92" font-family="Arial, sans-serif" font-size="34" font-weight="800" fill="#fff">${title}</text>
+      <text x="36" y="138" font-family="Arial, sans-serif" font-size="21" font-weight="700" fill="rgba(255,255,255,.9)">${subtitle}</text>
+    </svg>
+  `);
+}
+
+export function makeCategoryTile(title: string, color: string) {
+  return encodeSvg(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="390" height="110" viewBox="0 0 390 110">
+      <rect width="390" height="110" rx="8" fill="#f3f4f6"/>
+      <rect y="55" width="390" height="55" fill="rgba(0,0,0,.48)"/>
+      <circle cx="314" cy="55" r="46" fill="${color}" opacity=".45"/>
+      <rect x="252" y="28" width="88" height="58" rx="10" fill="${color}" opacity=".72"/>
+      <text x="38" y="54" font-family="Arial, sans-serif" font-size="23" font-weight="800" fill="#374151">${title}</text>
+      <text x="38" y="88" font-family="Arial, sans-serif" font-size="31" font-weight="800" fill="#fff">${title}</text>
+    </svg>
+  `);
+}
+
+export function makePlaceholderIcon(kind: "author" | "publisher") {
+  const symbol = kind === "author" ? "✒" : "▰";
+  return encodeSvg(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="180" height="120" viewBox="0 0 180 120">
+      <rect width="180" height="120" fill="#fff"/>
+      <circle cx="90" cy="58" r="38" fill="#b8b8b8"/>
+      <text x="90" y="72" text-anchor="middle" font-family="Arial, sans-serif" font-size="46" font-weight="700" fill="#fff">${symbol}</text>
+    </svg>
+  `);
+}
+
+export function makeAuthIllustration() {
+  return encodeSvg(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="720" height="450" viewBox="0 0 720 450">
+      <rect width="720" height="450" fill="#f8fafc"/>
+      <circle cx="338" cy="108" r="76" fill="#dc2626"/>
+      <rect x="76" y="270" width="570" height="108" fill="#e5e7eb"/>
+      <g fill="#cbd5e1">
+        <rect x="104" y="190" width="44" height="188"/><rect x="170" y="150" width="58" height="228"/><rect x="524" y="162" width="50" height="216"/><rect x="600" y="205" width="38" height="173"/>
+      </g>
+      <path d="M0 346c160-88 312 26 448-54 94-55 180-24 272 34v124H0z" fill="#fff"/>
+      <g transform="translate(320 108)">
+        <circle cx="40" cy="42" r="28" fill="#7c2d12"/>
+        <path d="M20 76h56l18 138H2z" fill="#f59e0b"/>
+        <rect x="58" y="94" width="94" height="20" rx="6" fill="#1e40af"/>
+        <rect x="70" y="122" width="84" height="20" rx="6" fill="#0f766e"/>
+        <rect x="84" y="150" width="70" height="20" rx="6" fill="#dc2626"/>
+        <rect x="16" y="210" width="18" height="110" fill="#475569"/>
+        <rect x="68" y="210" width="18" height="110" fill="#475569"/>
+      </g>
+    </svg>
+  `);
+}
