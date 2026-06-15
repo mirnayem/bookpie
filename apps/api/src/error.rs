@@ -13,6 +13,12 @@ pub enum ApiError {
     Unauthorized,
     #[error("forbidden")]
     Forbidden,
+    #[error("resource not found")]
+    NotFound,
+    #[error("conflict: {0}")]
+    Conflict(String),
+    #[error("validation error: {0}")]
+    Validation(String),
     #[error("postgres error: {0}")]
     Sqlx(#[from] sqlx::Error),
     #[error("redis error: {0}")]
@@ -32,6 +38,9 @@ impl ApiError {
         match self {
             Self::Unauthorized => StatusCode::UNAUTHORIZED,
             Self::Forbidden => StatusCode::FORBIDDEN,
+            Self::NotFound => StatusCode::NOT_FOUND,
+            Self::Conflict(_) => StatusCode::CONFLICT,
+            Self::Validation(_) => StatusCode::UNPROCESSABLE_ENTITY,
             Self::Config(_)
             | Self::Sqlx(_)
             | Self::Redis(_)
@@ -47,6 +56,9 @@ impl ApiError {
             Self::Config(_) => "CONFIG_ERROR",
             Self::Unauthorized => "UNAUTHORIZED",
             Self::Forbidden => "FORBIDDEN",
+            Self::NotFound => "NOT_FOUND",
+            Self::Conflict(_) => "CONFLICT",
+            Self::Validation(_) => "VALIDATION_ERROR",
             Self::Sqlx(_) => "DATABASE_ERROR",
             Self::Redis(_) => "REDIS_ERROR",
             Self::Jwt(_) => "TOKEN_ERROR",

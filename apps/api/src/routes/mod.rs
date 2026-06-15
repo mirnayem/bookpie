@@ -1,7 +1,12 @@
 use axum::{Router, routing::get};
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 
-use crate::{middleware, routes::health::health_router, state::AppState};
+use crate::{
+    middleware,
+    modules::{auth::controller::auth_router, books::controller::catalog_router},
+    routes::health::health_router,
+    state::AppState,
+};
 
 mod health;
 
@@ -9,6 +14,8 @@ pub fn build_router(state: AppState) -> Router {
     Router::new()
         .route("/", get(root))
         .nest("/health", health_router())
+        .nest("/api/v1/auth", auth_router())
+        .nest("/api/v1", catalog_router())
         .nest("/api/v1", protected_router())
         .layer(cors_layer(&state))
         .layer(TraceLayer::new_for_http())
