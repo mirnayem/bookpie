@@ -3,7 +3,12 @@ use tower_http::{cors::CorsLayer, trace::TraceLayer};
 
 use crate::{
     middleware,
-    modules::{auth::controller::auth_router, books::controller::catalog_router},
+    modules::{
+        admin::controller::admin_router, auth::controller::auth_router,
+        books::controller::catalog_router, carts::controller::cart_router,
+        inventory::controller::inventory_router, orders::controller::order_router,
+        profiles::controller::profile_router, search::controller::search_router,
+    },
     routes::health::health_router,
     state::AppState,
 };
@@ -16,6 +21,12 @@ pub fn build_router(state: AppState) -> Router {
         .nest("/health", health_router())
         .nest("/api/v1/auth", auth_router())
         .nest("/api/v1", catalog_router())
+        .nest("/api/v1", search_router())
+        .nest("/api/v1", cart_router())
+        .nest("/api/v1", profile_router())
+        .nest("/api/v1", inventory_router())
+        .nest("/api/v1", order_router())
+        .nest("/api/v1", admin_router())
         .nest("/api/v1", protected_router())
         .layer(cors_layer(&state))
         .layer(TraceLayer::new_for_http())

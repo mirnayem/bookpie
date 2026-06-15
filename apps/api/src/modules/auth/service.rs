@@ -12,8 +12,10 @@ use crate::{
     middleware::auth::{Claims, UserRole},
     modules::auth::{
         model::{
-            AuthResponse, AuthUser, LoginRequest, RefreshTokenRequest, RegisterRequest, TokenPair,
-            UserRecord,
+            AuthResponse, AuthUser, LoginRequest, LogoutRequest, OtpRequest, OtpResponse,
+            PasswordResetConfirmRequest, PasswordResetRequest, PasswordResetResponse,
+            RefreshTokenRequest, RegisterRequest, TokenPair, UserRecord, VerificationResponse,
+            VerifyOtpRequest,
         },
         repository::AuthRepository,
     },
@@ -82,6 +84,99 @@ impl AuthService {
         self.auth_response(user).await
     }
 
+    pub async fn logout(&self, payload: LogoutRequest) -> Result<(), ApiError> {
+        let token_hash = hash_refresh_token(&payload.refresh_token);
+        self.repository.revoke_refresh_token(&token_hash).await
+    }
+
+    pub async fn request_password_reset(
+        &self,
+        payload: PasswordResetRequest,
+    ) -> Result<PasswordResetResponse, ApiError> {
+        let token = new_refresh_token();
+
+        if let Some(user) = self.repository.find_user_by_email(&payload.email).await? {
+            let token_hash = hash_refresh_token(&token);
+            let expires_at = Utc::now() + Duration::minutes(30);
+            self.repository
+                .store_password_reset_token(user.id, &token_hash, expires_at)
+                .await?;
+        }
+
+        Ok(PasswordResetResponse {
+            reset_token: self.mock_secret(token),
+        })
+    }
+
+    pub async fn confirm_password_reset(
+        &self,
+        payload: PasswordResetConfirmRequest,
+    ) -> Result<(), ApiError> {
+        let token_hash = hash_refresh_token(&payload.token);
+        let user_id = self
+            .repository
+            .consume_password_reset_token(&token_hash)
+            .await?
+            .ok_or(ApiError::Unauthorized)?;
+        let password_hash = hash_password(&payload.password)?;
+
+        self.repository
+            .update_password(user_id, &password_hash)
+            .await?;
+        self.repository.revoke_all_refresh_tokens(user_id).await
+    }
+
+    pub async fn request_otp(&self, payload: OtpRequest) -> Result<OtpResponse, ApiError> {
+        let user = self
+            .repository
+            .find_user_by_email(&payload.email)
+            .await?
+            .ok_or(ApiError::NotFound)?;
+        let code = new_otp_code(user.id, payload.purpose.as_str());
+        let code_hash = hash_refresh_token(&code);
+        let expires_at = Utc::now() + Duration::minutes(10);
+
+        self.repository
+            .store_otp(
+                user.id,
+                &payload.purpose,
+                payload.email.trim(),
+                &code_hash,
+                expires_at,
+            )
+            .await?;
+
+        Ok(OtpResponse {
+            otp_code: self.mock_secret(code),
+        })
+    }
+
+    pub async fn verify_otp(
+        &self,
+        payload: VerifyOtpRequest,
+    ) -> Result<VerificationResponse, ApiError> {
+        let user = self
+            .repository
+            .find_user_by_email(&payload.email)
+            .await?
+            .ok_or(ApiError::NotFound)?;
+        let code_hash = hash_refresh_token(&payload.code);
+        let verified = self
+            .repository
+            .consume_otp(user.id, &payload.purpose, &code_hash)
+            .await?;
+
+        if !verified {
+            return Err(ApiError::Unauthorized);
+        }
+
+        self.repository
+            .mark_verified(user.id, &payload.purpose)
+            .await?;
+
+        Ok(VerificationResponse { verified })
+    }
+
     async fn auth_response(&self, user: UserRecord) -> Result<AuthResponse, ApiError> {
         let tokens = self.issue_tokens(user.id, user.role.clone()).await?;
 
@@ -105,6 +200,10 @@ impl AuthService {
             access_token,
             refresh_token,
         })
+    }
+
+    fn mock_secret(&self, value: String) -> Option<String> {
+        (self.state.config.app_env != "production").then_some(value)
     }
 }
 
@@ -146,6 +245,22 @@ fn encode_access_token(
 
 fn new_refresh_token() -> String {
     format!("{}.{}", Uuid::new_v4(), Uuid::new_v4())
+}
+
+fn new_otp_code(user_id: Uuid, purpose: &str) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(user_id.as_bytes());
+    hasher.update(purpose.as_bytes());
+    hasher.update(
+        Utc::now()
+            .timestamp_nanos_opt()
+            .unwrap_or_default()
+            .to_be_bytes(),
+    );
+    let digest = hasher.finalize();
+    let value = u32::from_be_bytes([digest[0], digest[1], digest[2], digest[3]]) % 1_000_000;
+
+    format!("{value:06}")
 }
 
 fn hash_refresh_token(token: &str) -> String {

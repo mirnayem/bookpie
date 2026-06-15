@@ -4,6 +4,13 @@ const config: Config = {
   darkMode: ["class"],
   content: ["./src/**/*.{js,ts,jsx,tsx,mdx}"],
   theme: {
+    screens: {
+      sm: "640px",
+      md: "768px",
+      lg: "1024px",
+      xl: "1280px",
+      "2xl": "1536px",
+    },
     extend: {
       colors: {
         border: "hsl(var(--border))",
@@ -36,8 +43,20 @@ const config: Config = {
       boxShadow: {
         soft: "0 8px 24px rgb(15 23 42 / 0.08)",
       },
+      spacing: {
+        page: "1.5rem",
+        section: "3rem",
+        rail: "1.25rem",
+      },
       fontFamily: {
-        sans: ["Noto Sans Bengali", "Hind Siliguri", "SolaimanLipi", "Inter", "system-ui", "sans-serif"],
+        sans: [
+          "Noto Sans Bengali",
+          "Hind Siliguri",
+          "SolaimanLipi",
+          "Inter",
+          "system-ui",
+          "sans-serif",
+        ],
       },
     },
   },

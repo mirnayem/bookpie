@@ -16,6 +16,7 @@ use super::{
     },
     service::CatalogService,
 };
+use crate::modules::search::{model::BookSearchDocument, service::SearchService};
 
 pub fn catalog_router() -> Router<AppState> {
     Router::new()
@@ -72,6 +73,7 @@ async fn create_book(
 
     let service = CatalogService::new(state.pg_pool.clone());
     let book = service.create_book(payload).await?;
+    sync_book_to_search(&state, book.clone()).await;
 
     Ok(Json(ApiResponse::ok(book)))
 }
@@ -86,6 +88,7 @@ async fn update_book(
 
     let service = CatalogService::new(state.pg_pool.clone());
     let book = service.update_book(id, payload).await?;
+    sync_book_to_search(&state, book.clone()).await;
 
     Ok(Json(ApiResponse::ok(book)))
 }
@@ -99,6 +102,7 @@ async fn delete_book(
 
     let service = CatalogService::new(state.pg_pool.clone());
     service.delete_book(id).await?;
+    delete_book_from_search(&state, id).await;
 
     Ok(Json(ApiResponse::ok(())))
 }
@@ -248,4 +252,23 @@ async fn delete_category(
     service.delete_category(id).await?;
 
     Ok(Json(ApiResponse::ok(())))
+}
+
+async fn sync_book_to_search(state: &AppState, book: Book) {
+    let search_service = SearchService::new(state.http_client.clone(), state.config.clone());
+
+    if let Err(error) = search_service
+        .index_book(BookSearchDocument::from(book))
+        .await
+    {
+        tracing::warn!(error = %error, "failed to index book in Meilisearch");
+    }
+}
+
+async fn delete_book_from_search(state: &AppState, id: Uuid) {
+    let search_service = SearchService::new(state.http_client.clone(), state.config.clone());
+
+    if let Err(error) = search_service.delete_book(id).await {
+        tracing::warn!(error = %error, "failed to delete book from Meilisearch");
+    }
 }

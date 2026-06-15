@@ -5,7 +5,7 @@ use uuid::Uuid;
 use crate::{
     error::ApiError,
     middleware::auth::UserRole,
-    modules::auth::model::{RegisterRequest, UserRecord},
+    modules::auth::model::{OtpPurpose, RegisterRequest, UserRecord},
 };
 
 #[derive(Clone)]
@@ -128,6 +128,160 @@ impl AuthRepository {
 
         Ok(())
     }
+
+    pub async fn revoke_all_refresh_tokens(&self, user_id: Uuid) -> Result<(), ApiError> {
+        sqlx::query(
+            r#"
+            UPDATE refresh_tokens
+            SET revoked_at = now()
+            WHERE user_id = $1
+              AND revoked_at IS NULL
+            "#,
+        )
+        .bind(user_id)
+        .execute(&self.pool)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn store_password_reset_token(
+        &self,
+        user_id: Uuid,
+        token_hash: &str,
+        expires_at: DateTime<Utc>,
+    ) -> Result<(), ApiError> {
+        sqlx::query(
+            r#"
+            INSERT INTO password_reset_tokens (id, user_id, token_hash, expires_at)
+            VALUES ($1, $2, $3, $4)
+            "#,
+        )
+        .bind(Uuid::new_v4())
+        .bind(user_id)
+        .bind(token_hash)
+        .bind(expires_at)
+        .execute(&self.pool)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn consume_password_reset_token(
+        &self,
+        token_hash: &str,
+    ) -> Result<Option<Uuid>, ApiError> {
+        let row = sqlx::query(
+            r#"
+            UPDATE password_reset_tokens
+            SET used_at = now()
+            WHERE token_hash = $1
+              AND used_at IS NULL
+              AND expires_at > now()
+            RETURNING user_id
+            "#,
+        )
+        .bind(token_hash)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(row.map(|row| row.get("user_id")))
+    }
+
+    pub async fn update_password(
+        &self,
+        user_id: Uuid,
+        password_hash: &str,
+    ) -> Result<(), ApiError> {
+        let result = sqlx::query(
+            r#"
+            UPDATE users
+            SET password_hash = $2,
+                updated_at = now()
+            WHERE id = $1
+            "#,
+        )
+        .bind(user_id)
+        .bind(password_hash)
+        .execute(&self.pool)
+        .await?;
+
+        if result.rows_affected() == 0 {
+            return Err(ApiError::NotFound);
+        }
+
+        Ok(())
+    }
+
+    pub async fn store_otp(
+        &self,
+        user_id: Uuid,
+        purpose: &OtpPurpose,
+        destination: &str,
+        code_hash: &str,
+        expires_at: DateTime<Utc>,
+    ) -> Result<(), ApiError> {
+        sqlx::query(
+            r#"
+            INSERT INTO auth_otps (id, user_id, purpose, destination, code_hash, expires_at)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            "#,
+        )
+        .bind(Uuid::new_v4())
+        .bind(user_id)
+        .bind(purpose.as_str())
+        .bind(destination)
+        .bind(code_hash)
+        .bind(expires_at)
+        .execute(&self.pool)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn consume_otp(
+        &self,
+        user_id: Uuid,
+        purpose: &OtpPurpose,
+        code_hash: &str,
+    ) -> Result<bool, ApiError> {
+        let result = sqlx::query(
+            r#"
+            UPDATE auth_otps
+            SET consumed_at = now()
+            WHERE user_id = $1
+              AND purpose = $2
+              AND code_hash = $3
+              AND consumed_at IS NULL
+              AND expires_at > now()
+            "#,
+        )
+        .bind(user_id)
+        .bind(purpose.as_str())
+        .bind(code_hash)
+        .execute(&self.pool)
+        .await?;
+
+        Ok(result.rows_affected() > 0)
+    }
+
+    pub async fn mark_verified(&self, user_id: Uuid, purpose: &OtpPurpose) -> Result<(), ApiError> {
+        let statement = match purpose {
+            OtpPurpose::EmailVerification => {
+                "UPDATE users SET email_verified_at = now(), updated_at = now() WHERE id = $1"
+            }
+            OtpPurpose::PhoneVerification => {
+                "UPDATE users SET phone_verified_at = now(), updated_at = now() WHERE id = $1"
+            }
+        };
+
+        sqlx::query(statement)
+            .bind(user_id)
+            .execute(&self.pool)
+            .await?;
+
+        Ok(())
+    }
 }
 
 fn user_from_row(row: sqlx::postgres::PgRow) -> Result<UserRecord, ApiError> {
@@ -146,9 +300,21 @@ fn user_from_row(row: sqlx::postgres::PgRow) -> Result<UserRecord, ApiError> {
 fn parse_role(role: &str) -> Result<UserRole, ApiError> {
     match role {
         "customer" => Ok(UserRole::Customer),
+        "warehouse_manager" => Ok(UserRole::WarehouseManager),
+        "delivery_agent" => Ok(UserRole::DeliveryAgent),
         "admin" => Ok(UserRole::Admin),
+        "super_admin" => Ok(UserRole::SuperAdmin),
         other => Err(ApiError::Config(format!(
             "unknown user role in database: {other}"
         ))),
+    }
+}
+
+impl OtpPurpose {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::EmailVerification => "email_verification",
+            Self::PhoneVerification => "phone_verification",
+        }
     }
 }

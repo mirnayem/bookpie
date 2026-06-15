@@ -30,6 +30,10 @@ impl CatalogService {
             .await
     }
 
+    pub async fn list_books_for_index(&self) -> Result<Vec<Book>, ApiError> {
+        self.repository.list_books(10_000, 0).await
+    }
+
     pub async fn book_details(&self, slug: &str) -> Result<Book, ApiError> {
         self.repository
             .find_book_by_slug(slug)

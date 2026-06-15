@@ -2,60 +2,60 @@
 
 ## Phase 0 - Project Setup
 
-* [ ] Create monorepo
-* [ ] Setup pnpm workspace
-* [ ] Setup Rust workspace
-* [ ] Setup Docker environment
-* [ ] Setup PostgreSQL
-* [ ] Setup Redis
-* [ ] Setup Meilisearch
-* [ ] Setup MinIO
-* [ ] Setup NATS
-* [ ] Setup CI/CD pipeline
-* [ ] Setup GitHub Actions
-* [ ] Setup staging environment
-* [ ] Setup production environment
-* [ ] Setup monitoring
-* [ ] Setup logging
-* [ ] Setup OpenTelemetry
+* [x] Create monorepo
+* [x] Setup pnpm workspace
+* [x] Setup Rust workspace
+* [x] Setup Docker environment
+* [x] Setup PostgreSQL
+* [x] Setup Redis
+* [x] Setup Meilisearch
+* [x] Setup MinIO
+* [x] Setup NATS
+* [x] Setup CI/CD pipeline
+* [x] Setup GitHub Actions
+* [x] Setup staging environment
+* [x] Setup production environment
+* [x] Setup monitoring
+* [x] Setup logging
+* [x] Setup OpenTelemetry
 
 ---
 
 ## Phase 1 - Design System
 
-* [ ] Install Tailwind
-* [ ] Install Shadcn UI
-* [ ] Create color tokens
-* [ ] Create typography tokens
-* [ ] Create spacing system
-* [ ] Create responsive breakpoints
-* [ ] Create Button component
-* [ ] Create Input component
-* [ ] Create Select component
-* [ ] Create Modal component
-* [ ] Create Drawer component
-* [ ] Create Toast component
-* [ ] Create Skeleton component
-* [ ] Create Product Card
-* [ ] Create Product Grid
-* [ ] Create Pagination
-* [ ] Create Address Card
-* [ ] Create Cart Drawer
+* [x] Install Tailwind
+* [x] Install Shadcn UI
+* [x] Create color tokens
+* [x] Create typography tokens
+* [x] Create spacing system
+* [x] Create responsive breakpoints
+* [x] Create Button component
+* [x] Create Input component
+* [x] Create Select component
+* [x] Create Modal component
+* [x] Create Drawer component
+* [x] Create Toast component
+* [x] Create Skeleton component
+* [x] Create Product Card
+* [x] Create Product Grid
+* [x] Create Pagination
+* [x] Create Address Card
+* [x] Create Cart Drawer
 
 ---
 
 ## Phase 2 - Authentication
 
-* [ ] Register API
-* [ ] Login API
-* [ ] Refresh Token API
-* [ ] Logout API
-* [ ] Password Reset API
-* [ ] OTP Service
-* [ ] Email Verification
-* [ ] Phone Verification
-* [ ] JWT middleware
-* [ ] Role based authorization
+* [x] Register API
+* [x] Login API
+* [x] Refresh Token API
+* [x] Logout API
+* [x] Password Reset API
+* [x] OTP Service
+* [x] Email Verification
+* [x] Phone Verification
+* [x] JWT middleware
+* [x] Role based authorization
 
 Roles:
 
@@ -69,15 +69,43 @@ Roles:
 
 ## Phase 3 - Customer Profiles
 
-* [ ] Customer model
-* [ ] Profile API
-* [ ] Update Profile API
-* [ ] Multiple Address Support
-* [ ] Default Address
-* [ ] Geo-location storage
-* [ ] Address validation
+* [x] Customer model
+* [x] Profile API
+* [x] Update Profile API
+* [x] Multiple Address Support
+* [x] Default Address
+* [x] Geo-location storage
+* [x] Address validation
 * [ ] Saved cards
 * [ ] Saved payment methods
+
+---
+
+## Admin MVP Execution Plan
+
+Backend-first admin/customer operations required before admin UI:
+
+* [x] Profile and address database model
+* [x] Customer profile read/update APIs
+* [x] Customer address CRUD APIs
+* [x] Admin customer list/detail APIs
+* [x] Single warehouse inventory database model
+* [x] Admin inventory list/update APIs
+* [x] Stock movement log APIs
+* [x] Order database model
+* [x] Create order from cart API
+* [x] Customer order history/detail APIs
+* [x] Admin order list/detail/status APIs
+* [x] Manual delivery assignment database model
+* [x] Admin delivery assignment/update APIs
+* [x] Admin dashboard summary API
+* [x] Shared frontend contracts for profile, inventory, orders, delivery, admin dashboard
+* [ ] Admin frontend shell
+* [ ] Admin customer management UI
+* [ ] Admin inventory management UI
+* [ ] Admin order management UI
+* [ ] Admin delivery assignment UI
+* [ ] Admin profile/settings UI
 
 ---
 
@@ -225,12 +253,12 @@ Roles:
 
 ## Phase 11 - Orders
 
-* [ ] Order creation
-* [ ] Order confirmation
+* [x] Order creation
+* [x] Order confirmation
 * [ ] Order cancellation
 * [ ] Order refund
 * [ ] Order return
-* [ ] Order timeline
+* [x] Order timeline
 * [ ] Invoice generation
 
 Order States:

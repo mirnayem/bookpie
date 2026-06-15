@@ -29,6 +29,67 @@ pub struct RefreshTokenRequest {
     pub refresh_token: String,
 }
 
+#[derive(Debug, Deserialize, Validate)]
+pub struct LogoutRequest {
+    #[validate(length(min = 16))]
+    pub refresh_token: String,
+}
+
+#[derive(Debug, Deserialize, Validate)]
+pub struct PasswordResetRequest {
+    #[validate(email)]
+    pub email: String,
+}
+
+#[derive(Debug, Deserialize, Validate)]
+pub struct PasswordResetConfirmRequest {
+    #[validate(length(min = 16))]
+    pub token: String,
+    #[validate(length(min = 8, max = 128))]
+    pub password: String,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum OtpPurpose {
+    EmailVerification,
+    PhoneVerification,
+}
+
+#[derive(Debug, Deserialize, Validate)]
+pub struct OtpRequest {
+    #[validate(email)]
+    pub email: String,
+    pub purpose: OtpPurpose,
+}
+
+#[derive(Debug, Deserialize, Validate)]
+pub struct VerifyOtpRequest {
+    #[validate(email)]
+    pub email: String,
+    pub purpose: OtpPurpose,
+    #[validate(length(min = 6, max = 6))]
+    pub code: String,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PasswordResetResponse {
+    pub reset_token: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OtpResponse {
+    pub otp_code: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct VerificationResponse {
+    pub verified: bool,
+}
+
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AuthResponse {

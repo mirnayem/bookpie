@@ -19,10 +19,14 @@ pub enum ApiError {
     Conflict(String),
     #[error("validation error: {0}")]
     Validation(String),
+    #[error("search error: {0}")]
+    Search(String),
     #[error("postgres error: {0}")]
     Sqlx(#[from] sqlx::Error),
     #[error("redis error: {0}")]
     Redis(#[from] redis::RedisError),
+    #[error("http client error: {0}")]
+    Http(#[from] reqwest::Error),
     #[error("jwt error: {0}")]
     Jwt(#[from] jsonwebtoken::errors::Error),
     #[error("io error: {0}")]
@@ -41,9 +45,11 @@ impl ApiError {
             Self::NotFound => StatusCode::NOT_FOUND,
             Self::Conflict(_) => StatusCode::CONFLICT,
             Self::Validation(_) => StatusCode::UNPROCESSABLE_ENTITY,
+            Self::Search(_) => StatusCode::BAD_GATEWAY,
             Self::Config(_)
             | Self::Sqlx(_)
             | Self::Redis(_)
+            | Self::Http(_)
             | Self::Jwt(_)
             | Self::Io(_)
             | Self::AddrParse(_)
@@ -59,8 +65,10 @@ impl ApiError {
             Self::NotFound => "NOT_FOUND",
             Self::Conflict(_) => "CONFLICT",
             Self::Validation(_) => "VALIDATION_ERROR",
+            Self::Search(_) => "SEARCH_ERROR",
             Self::Sqlx(_) => "DATABASE_ERROR",
             Self::Redis(_) => "REDIS_ERROR",
+            Self::Http(_) => "HTTP_ERROR",
             Self::Jwt(_) => "TOKEN_ERROR",
             Self::Io(_) => "IO_ERROR",
             Self::AddrParse(_) | Self::ParseInt(_) => "PARSE_ERROR",

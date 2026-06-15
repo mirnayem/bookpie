@@ -13,7 +13,10 @@ use crate::{error::ApiError, models::ids::UserId, response::ApiResponse, state::
 #[serde(rename_all = "lowercase")]
 pub enum UserRole {
     Customer,
+    WarehouseManager,
+    DeliveryAgent,
     Admin,
+    SuperAdmin,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -33,8 +36,10 @@ pub struct CurrentUser {
 impl CurrentUser {
     pub fn require_admin(&self) -> Result<(), ApiError> {
         match self.role {
-            UserRole::Admin => Ok(()),
-            UserRole::Customer => Err(ApiError::Forbidden),
+            UserRole::Admin | UserRole::SuperAdmin => Ok(()),
+            UserRole::Customer | UserRole::WarehouseManager | UserRole::DeliveryAgent => {
+                Err(ApiError::Forbidden)
+            }
         }
     }
 }

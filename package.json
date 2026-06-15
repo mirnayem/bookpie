@@ -2,6 +2,7 @@
   "name": "bookpie-monorepo",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@9.15.4",
   "workspaces": [
     "apps/web",
     "packages/shared"
@@ -10,9 +11,9 @@
     "api:dev": "cargo run -p api",
     "api:check": "cargo check -p api",
     "api:clippy": "cargo clippy -p api --all-targets --all-features",
-    "web:dev": "npm run dev --workspace @bookpie/web",
-    "web:build": "npm run build --workspace @bookpie/web",
-    "web:lint": "npm run lint --workspace @bookpie/web",
-    "web:typecheck": "npm run typecheck --workspace @bookpie/web"
+    "web:dev": "pnpm --filter @bookpie/web dev",
+    "web:build": "pnpm --filter @bookpie/web build",
+    "web:lint": "pnpm --filter @bookpie/web lint",
+    "web:typecheck": "pnpm --filter @bookpie/web typecheck"
   }
 }
