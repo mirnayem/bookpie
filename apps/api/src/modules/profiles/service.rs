@@ -73,7 +73,7 @@ impl ProfileService {
         query: CustomerListQuery,
     ) -> Result<Vec<AdminCustomerSummary>, ApiError> {
         self.repository
-            .list_customers(query.limit(), query.offset())
+            .list_customers(query.limit(), query.offset(), query.search())
             .await
     }
 }

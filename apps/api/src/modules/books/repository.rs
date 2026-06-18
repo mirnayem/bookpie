@@ -18,12 +18,26 @@ impl CatalogRepository {
         Self { pool }
     }
 
-    pub async fn list_books(&self, limit: i64, offset: i64) -> Result<Vec<Book>, ApiError> {
-        let rows = sqlx::query(BOOK_SELECT)
-            .bind(limit)
-            .bind(offset)
-            .fetch_all(&self.pool)
-            .await?;
+    pub async fn list_books(
+        &self,
+        limit: i64,
+        offset: i64,
+        search: Option<String>,
+    ) -> Result<Vec<Book>, ApiError> {
+        let rows = if let Some(search) = search {
+            sqlx::query(BOOK_SELECT_SEARCH)
+                .bind(search)
+                .bind(limit)
+                .bind(offset)
+                .fetch_all(&self.pool)
+                .await?
+        } else {
+            sqlx::query(BOOK_SELECT)
+                .bind(limit)
+                .bind(offset)
+                .fetch_all(&self.pool)
+                .await?
+        };
 
         rows.into_iter().map(book_from_row).collect()
     }
@@ -382,6 +396,46 @@ const BOOK_SELECT: &str = r#"
     GROUP BY b.id, a.id, p.id
     ORDER BY b.created_at DESC
     LIMIT $1 OFFSET $2
+"#;
+
+const BOOK_SELECT_SEARCH: &str = r#"
+    SELECT
+        b.id,
+        b.title,
+        b.slug,
+        b.description,
+        b.price,
+        b.sale_price,
+        b.stock,
+        b.cover_image_url,
+        a.id AS author_id,
+        a.name AS author_name,
+        a.slug AS author_slug,
+        p.id AS publisher_id,
+        p.name AS publisher_name,
+        p.slug AS publisher_slug,
+        COALESCE(
+            jsonb_agg(
+                DISTINCT jsonb_build_object(
+                    'id', c.id,
+                    'name', c.name,
+                    'slug', c.slug
+                )
+            ) FILTER (WHERE c.id IS NOT NULL),
+            '[]'::jsonb
+        ) AS categories
+    FROM books b
+    INNER JOIN authors a ON a.id = b.author_id
+    INNER JOIN publishers p ON p.id = b.publisher_id
+    LEFT JOIN book_categories bc ON bc.book_id = b.id
+    LEFT JOIN categories c ON c.id = bc.category_id
+    WHERE b.title ILIKE $1
+       OR b.slug ILIKE $1
+       OR a.name ILIKE $1
+       OR p.name ILIKE $1
+    GROUP BY b.id, a.id, p.id
+    ORDER BY b.created_at DESC
+    LIMIT $2 OFFSET $3
 "#;
 
 const BOOK_BY_ID: &str = r#"

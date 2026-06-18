@@ -26,12 +26,12 @@ impl CatalogService {
 
     pub async fn list_books(&self, query: ListQuery) -> Result<Vec<Book>, ApiError> {
         self.repository
-            .list_books(query.limit(), query.offset())
+            .list_books(query.limit(), query.offset(), query.search())
             .await
     }
 
     pub async fn list_books_for_index(&self) -> Result<Vec<Book>, ApiError> {
-        self.repository.list_books(10_000, 0).await
+        self.repository.list_books(10_000, 0, None).await
     }
 
     pub async fn book_details(&self, slug: &str) -> Result<Book, ApiError> {

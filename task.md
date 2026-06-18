@@ -81,31 +81,143 @@ Roles:
 
 ---
 
-## Admin MVP Execution Plan
+## Admin Dashboard Execution Plan
 
-Backend-first admin/customer operations required before admin UI:
+Goal: Build a backend-connected admin dashboard for managing BookPie bookstore operations. Admin UI must use existing APIs first, add backend gaps only when required, and keep all contracts in `packages/shared`.
 
-* [x] Profile and address database model
-* [x] Customer profile read/update APIs
-* [x] Customer address CRUD APIs
-* [x] Admin customer list/detail APIs
-* [x] Single warehouse inventory database model
-* [x] Admin inventory list/update APIs
-* [x] Stock movement log APIs
-* [x] Order database model
-* [x] Create order from cart API
-* [x] Customer order history/detail APIs
-* [x] Admin order list/detail/status APIs
-* [x] Manual delivery assignment database model
-* [x] Admin delivery assignment/update APIs
-* [x] Admin dashboard summary API
-* [x] Shared frontend contracts for profile, inventory, orders, delivery, admin dashboard
-* [ ] Admin frontend shell
-* [ ] Admin customer management UI
-* [ ] Admin inventory management UI
-* [ ] Admin order management UI
-* [ ] Admin delivery assignment UI
-* [ ] Admin profile/settings UI
+### Admin Foundation
+
+* [x] Create `/admin` route group in Next.js App Router
+* [x] Create admin layout with sidebar, topbar, breadcrumbs, and content shell
+* [x] Add protected admin route guard using auth state and admin roles
+* [x] Add admin API client helpers using normalized API responses
+* [x] Add TanStack Query provider usage for all admin reads/writes
+* [x] Add shared admin table, empty state, loading state, error state, and confirm dialog components
+* [x] Add admin dashboard navigation for Dashboard, Products, Orders, Customers, Inventory, Delivery, Reports, Settings
+* [x] Add responsive admin layout for desktop, tablet, and mobile
+
+### Admin Dashboard Overview
+
+* [x] Connect dashboard summary cards to `/api/v1/admin/dashboard/summary`
+* [x] Show total customers, books, orders, pending orders, low-stock books, and paid revenue
+* [x] Add recent orders panel
+* [x] Add low-stock inventory panel
+* [x] Add quick actions for creating product, updating inventory, and reviewing pending orders
+* [x] Add skeleton/loading/error states
+
+### Product Management
+
+* [x] Create products list page
+* [x] Connect list to `/api/v1/books`
+* [x] Add product search, pagination, and basic sorting
+* [x] Add product create form using React Hook Form + Zod
+* [x] Add product edit form using existing book details data
+* [x] Connect create to `POST /api/v1/admin/books`
+* [x] Connect update to `PATCH /api/v1/admin/books/{id}`
+* [x] Connect delete to `DELETE /api/v1/admin/books/{id}`
+* [x] Manage title, slug, description, author, publisher, categories, price, sale price, stock, and cover image URL
+* [x] Validate sale price cannot exceed regular price
+* [x] Show product status indicators for in stock, low stock, and out of stock
+* [x] Add delete confirmation and mutation success/error toasts
+
+### Author, Publisher, And Category Management
+
+* [x] Create authors management page
+* [x] Connect author CRUD to existing author admin endpoints
+* [x] Create publishers management page
+* [x] Connect publisher CRUD to existing publisher admin endpoints
+* [x] Create categories management page
+* [x] Connect category CRUD to existing category admin endpoints
+* [x] Add reusable name/slug form component
+* [x] Add duplicate/validation error display
+* [x] Use these entities as selectable dependencies in product forms
+
+### Inventory Management
+
+* [x] Create inventory list page
+* [x] Connect inventory table to `/api/v1/admin/inventory`
+* [x] Add filters for low stock, out of stock, and search
+* [x] Add stock update dialog connected to `PATCH /api/v1/admin/inventory/{book_id}`
+* [x] Require admin note for stock adjustments
+* [x] Show stock movement history from `/api/v1/admin/inventory/movements`
+* [x] Add inventory detail drawer with book info, current stock, and movement timeline
+* [x] Prevent negative stock in UI validation
+* [x] Show mutation success/error toasts
+
+### Order Management
+
+* [x] Create orders list page
+* [x] Connect table to `/api/v1/admin/orders`
+* [x] Add status filter for pending, confirmed, picking, packed, out for delivery, delivered, cancelled, refunded
+* [x] Add order detail page or drawer connected to `/api/v1/admin/orders/{order_id}`
+* [x] Show customer, address, items, totals, payment status, order status, and delivery assignment
+* [x] Add order status update control connected to `PATCH /api/v1/admin/orders/{order_id}/status`
+* [x] Add timeline display
+* [x] Add cancellation/refund placeholders as disabled actions until backend support exists
+* [x] Add printable invoice task placeholder
+
+### Delivery Management
+
+* [x] Create delivery assignments page
+* [x] Use admin order data to show orders needing delivery assignment
+* [x] Add delivery assignment form connected to `POST /api/v1/admin/orders/{order_id}/delivery`
+* [x] Add delivery update form connected to `PATCH /api/v1/admin/orders/{order_id}/delivery`
+* [x] Manage agent name, agent phone, delivery status, and note
+* [x] Show delivery status badges
+* [x] Add validation for agent phone and required agent name
+
+### Customer And User Management
+
+* [x] Create customers list page
+* [x] Connect customers table to `/api/v1/admin/customers`
+* [x] Create customer detail page connected to `/api/v1/admin/customers/{customer_id}`
+* [x] Show profile, email, phone, addresses, and order history link
+* [x] Add customer search task if backend query support is missing
+* [x] Add user role management task if backend role update endpoint is missing
+* [x] Add account status management task if backend active/blocked field is missing
+
+### Admin Profile And Settings
+
+* [x] Create admin profile page
+* [x] Reuse profile APIs for admin profile read/update where compatible
+* [x] Add password change task if backend endpoint is missing
+* [x] Add admin session/logout action
+* [x] Add basic store settings placeholder for contact info, payment methods, and delivery defaults
+* [x] Keep unavailable settings visibly disabled until backend support exists
+
+### Reports And Audit Readiness
+
+* [x] Create reports overview page
+* [x] Add sales summary placeholder using dashboard summary data
+* [x] Add inventory report placeholder using inventory data
+* [x] Add order export task if backend CSV/export endpoint is missing
+* [x] Add audit log backend task for product, inventory, order, and user admin actions
+* [x] Add activity feed placeholder once audit log API exists
+
+### Shared Contracts And API Gaps
+
+* [x] Add missing admin request/response schemas to `packages/shared`
+* [x] Add admin list query schemas for pagination, search, status filters, and sorting
+* [x] Add backend pagination metadata if current list APIs are insufficient
+* [x] Add backend customer search/filter support if required by UI
+* [x] Add backend user role/status update endpoints if required by admin user management
+* [x] Add backend invoice/export endpoints if required by reports
+* [x] Keep all frontend admin forms validated with shared Zod schemas
+
+### Admin Testing And QA
+
+* [x] Add component tests for admin layout, protected route guard, tables, and forms
+* [x] Add mutation tests for product create/edit/delete UI states
+* [x] Add mutation tests for order status and delivery assignment UI states
+* [x] Add inventory stock update tests
+* [x] Add Playwright smoke test for `/admin`
+* [x] Add Playwright admin flows for product create, stock update, order status update, and delivery assignment
+* [x] Verify no horizontal overflow at 1440px, 768px, and 390px
+* [x] Verify Bengali and English text do not overlap in tables, badges, and forms
+* [x] Run `pnpm --filter @bookpie/web test`
+* [x] Run `pnpm --filter @bookpie/web lint`
+* [x] Run `cargo test -p api`
+* [x] Run `cargo clippy -p api --all-targets --all-features`
 
 ---
 
@@ -346,6 +458,8 @@ Order States:
 ---
 
 ## Phase 18 - Admin Portal
+
+Track detailed implementation in `Admin Dashboard Execution Plan`.
 
 * [ ] User management
 * [ ] Product management

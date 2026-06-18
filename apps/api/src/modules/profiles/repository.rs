@@ -154,9 +154,30 @@ impl ProfileRepository {
         &self,
         limit: i64,
         offset: i64,
+        search: Option<String>,
     ) -> Result<Vec<AdminCustomerSummary>, ApiError> {
-        let rows = sqlx::query(
-            r#"
+        let rows = if let Some(search) = search {
+            sqlx::query(
+                r#"
+            SELECT u.id, u.name, u.email, cp.phone, COUNT(ca.id)::BIGINT AS address_count
+            FROM users u
+            LEFT JOIN customer_profiles cp ON cp.user_id = u.id
+            LEFT JOIN customer_addresses ca ON ca.user_id = u.id
+            WHERE u.role = 'customer'
+              AND (u.name ILIKE $1 OR u.email ILIKE $1 OR cp.phone ILIKE $1)
+            GROUP BY u.id, cp.phone
+            ORDER BY u.created_at DESC
+            LIMIT $2 OFFSET $3
+            "#,
+            )
+            .bind(search)
+            .bind(limit)
+            .bind(offset)
+            .fetch_all(&self.pool)
+            .await?
+        } else {
+            sqlx::query(
+                r#"
             SELECT u.id, u.name, u.email, cp.phone, COUNT(ca.id)::BIGINT AS address_count
             FROM users u
             LEFT JOIN customer_profiles cp ON cp.user_id = u.id
@@ -166,11 +187,12 @@ impl ProfileRepository {
             ORDER BY u.created_at DESC
             LIMIT $1 OFFSET $2
             "#,
-        )
-        .bind(limit)
-        .bind(offset)
-        .fetch_all(&self.pool)
-        .await?;
+            )
+            .bind(limit)
+            .bind(offset)
+            .fetch_all(&self.pool)
+            .await?
+        };
 
         Ok(rows.into_iter().map(customer_summary_from_row).collect())
     }

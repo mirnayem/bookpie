@@ -104,6 +104,7 @@ pub struct AuthUser {
     pub name: String,
     pub email: String,
     pub role: UserRole,
+    pub is_active: bool,
     pub created_at: DateTime<Utc>,
 }
 
@@ -121,6 +122,7 @@ pub struct UserRecord {
     pub email: String,
     pub password_hash: String,
     pub role: UserRole,
+    pub is_active: bool,
     pub created_at: DateTime<Utc>,
 }
 
@@ -131,7 +133,15 @@ impl From<UserRecord> for AuthUser {
             name: record.name,
             email: record.email,
             role: record.role,
+            is_active: record.is_active,
             created_at: record.created_at,
         }
     }
+}
+
+#[derive(Debug, Deserialize, Validate)]
+#[serde(rename_all = "camelCase")]
+pub struct AdminUpdateUserRequest {
+    pub role: Option<UserRole>,
+    pub is_active: Option<bool>,
 }

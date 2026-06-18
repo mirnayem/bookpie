@@ -96,6 +96,7 @@ pub struct UpsertBookRequest {
 pub struct ListQuery {
     pub limit: Option<i64>,
     pub offset: Option<i64>,
+    pub search: Option<String>,
 }
 
 impl ListQuery {
@@ -105,5 +106,13 @@ impl ListQuery {
 
     pub fn offset(&self) -> i64 {
         self.offset.unwrap_or(0).max(0)
+    }
+
+    pub fn search(&self) -> Option<String> {
+        self.search
+            .as_deref()
+            .map(str::trim)
+            .filter(|value| value.len() >= 3)
+            .map(|value| format!("%{value}%"))
     }
 }
