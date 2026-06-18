@@ -28,7 +28,7 @@ import type {
 
 const coverPalette = [
   ["Book", "#14532d", "#166534"],
-  ["Read", "#7f1d1d", "#dc2626"],
+  ["Read", "#312e81", "#7c3aed"],
   ["Learn", "#1e3a8a", "#0284c7"],
   ["Faith", "#854d0e", "#f59e0b"],
   ["Life", "#312e81", "#7c3aed"],
@@ -96,7 +96,7 @@ export const heroBanners: PromoBanner[] = [
   {
     id: "hero-islamic",
     title: "ইসলামি বই উৎসব",
-    image: makeHeroBanner("ইসলামি বই উৎসব", "নির্বাচিত বইয়ে বিশেষ ছাড়", "#7f1d1d"),
+    image: makeHeroBanner("ইসলামি বই উৎসব", "নির্বাচিত বইয়ে বিশেষ ছাড়", "#4c1d95"),
     href: "/campaigns/islamic-book-fair",
   },
   {
@@ -153,7 +153,7 @@ export const authors: Person[] = [
   id: `author-${index + 1}`,
   name,
   href: `/authors/${index + 1}`,
-  image: makeAvatar(name, ["#334155", "#7f1d1d", "#14532d", "#4338ca"][index % 4]),
+  image: makeAvatar(name, ["#334155", "#4c1d95", "#14532d", "#4338ca"][index % 4]),
 }));
 
 export const publishers: Publisher[] = [
@@ -169,7 +169,7 @@ export const publishers: Publisher[] = [
   id: `publisher-${index + 1}`,
   name,
   href: `/publishers/${index + 1}`,
-  logo: makeLogo(`P${index + 1}`, ["#16a34a", "#2563eb", "#dc2626", "#334155"][index % 4]),
+  logo: makeLogo(`P${index + 1}`, ["#16a34a", "#2563eb", "#7c3aed", "#334155"][index % 4]),
 }));
 
 export const rankedLists: RankedList[] = [

@@ -27,7 +27,7 @@ export function makeHeroBanner(title: string, subtitle: string, color: string) {
       <defs>
         <linearGradient id="hero" x1="0" x2="1">
           <stop offset="0" stop-color="${color}"/>
-          <stop offset="1" stop-color="#ef4444"/>
+          <stop offset="1" stop-color="#7c3aed"/>
         </linearGradient>
       </defs>
       <rect width="1500" height="330" fill="url(#hero)"/>
@@ -90,7 +90,7 @@ export function makePhoneMockup() {
         <rect width="170" height="330" rx="28" fill="#fff" stroke="#d7dce3" stroke-width="5"/>
         <rect x="24" y="48" width="122" height="46" rx="8" fill="#fef2f2"/>
         <rect x="24" y="112" width="55" height="80" fill="#14532d"/>
-        <rect x="91" y="112" width="55" height="80" fill="#7f1d1d"/>
+        <rect x="91" y="112" width="55" height="80" fill="#4c1d95"/>
         <rect x="24" y="208" width="55" height="80" fill="#0369a1"/>
         <rect x="91" y="208" width="55" height="80" fill="#6d28d9"/>
       </g>
@@ -166,7 +166,7 @@ export function makeAuthIllustration() {
   return encodeSvg(`
     <svg xmlns="http://www.w3.org/2000/svg" width="720" height="450" viewBox="0 0 720 450">
       <rect width="720" height="450" fill="#f8fafc"/>
-      <circle cx="338" cy="108" r="76" fill="#dc2626"/>
+      <circle cx="338" cy="108" r="76" fill="#7c3aed"/>
       <rect x="76" y="270" width="570" height="108" fill="#e5e7eb"/>
       <g fill="#cbd5e1">
         <rect x="104" y="190" width="44" height="188"/><rect x="170" y="150" width="58" height="228"/><rect x="524" y="162" width="50" height="216"/><rect x="600" y="205" width="38" height="173"/>
@@ -177,7 +177,7 @@ export function makeAuthIllustration() {
         <path d="M20 76h56l18 138H2z" fill="#f59e0b"/>
         <rect x="58" y="94" width="94" height="20" rx="6" fill="#1e40af"/>
         <rect x="70" y="122" width="84" height="20" rx="6" fill="#0f766e"/>
-        <rect x="84" y="150" width="70" height="20" rx="6" fill="#dc2626"/>
+        <rect x="84" y="150" width="70" height="20" rx="6" fill="#4f46e5"/>
         <rect x="16" y="210" width="18" height="110" fill="#475569"/>
         <rect x="68" y="210" width="18" height="110" fill="#475569"/>
       </g>

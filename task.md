@@ -18,6 +18,7 @@
 * [x] Setup monitoring
 * [x] Setup logging
 * [x] Setup OpenTelemetry
+* [x] Add local demo seed data for users, catalog, carts, orders, inventory, and delivery
 
 ---
 
@@ -26,6 +27,7 @@
 * [x] Install Tailwind
 * [x] Install Shadcn UI
 * [x] Create color tokens
+* [x] Update primary brand palette to indigo/violet
 * [x] Create typography tokens
 * [x] Create spacing system
 * [x] Create responsive breakpoints

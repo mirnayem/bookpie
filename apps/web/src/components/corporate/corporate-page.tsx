@@ -27,7 +27,7 @@ const services = [
 export function CorporatePage() {
   return (
     <main>
-      <section className="bg-gradient-to-r from-red-600 to-red-800 py-20 text-center text-white">
+      <section className="bg-gradient-to-r from-indigo-600 to-violet-700 py-20 text-center text-white">
         <div className="container-page">
           <h1 className="text-3xl font-bold">ওয়াফিলাইফ কর্পোরেট সার্ভিস</h1>
           <p className="mx-auto mt-4 max-w-xl leading-7">আপনার প্রতিষ্ঠান, স্কুল ও কলেজ, বিশ্ববিদ্যালয়, মাদ্রাসা বা সংস্থার জন্য যে কোনো পরিমাণ বই অর্ডার করুন সহজে।</p>
