@@ -1,6 +1,6 @@
 "use client";
 
-import type { Author, Category, Publisher, UpsertAuthorRequest } from "@bookpie/shared";
+import type { Author, Brand, Category, Publisher, UpsertAuthorRequest } from "@bookpie/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Edit, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -16,7 +16,7 @@ import { Modal } from "@/components/ui/modal";
 import { useDebounce } from "@/lib/use-debounce";
 import { useAuthStore } from "@/stores/auth-store";
 
-type CatalogEntity = Author | Publisher | Category;
+type CatalogEntity = Author | Publisher | Category | Brand;
 
 type CatalogEntityAdminPageProps<T extends CatalogEntity> = {
   title: string;

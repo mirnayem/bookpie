@@ -1,6 +1,7 @@
-import { Heart, Share2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { ProductActions } from "@/components/product/product-actions";
+import { ShareProductButton } from "@/components/product/share-product-button";
 import { ProductSuggestionCard } from "@/components/product/product-suggestion-card";
 import { RatingBars } from "@/components/product/rating-bars";
 import { Button } from "@/components/ui/button";
@@ -51,17 +52,14 @@ export function ProductDetailPage({ product, suggestions, promos }: ProductDetai
             আমরা এক অদ্ভুত সময়ে বাস করছি। চেনা পৃথিবী বদলে যাচ্ছে, আর অনিশ্চিত নতুন পৃথিবীর জন্মযন্ত্রণা ফুটে উঠছে। এই বইটি বর্তমান বিশ্বকে বুঝতে পাঠককে সহায়তা করবে।
           </p>
           <p className="mt-5 text-2xl font-bold text-primary">{formatTaka(product.price)}</p>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Button>অর্ডার করুন</Button>
+          <div className="mt-6">
+            <ProductActions product={product} />
+          </div>
+          <div className="mt-3 flex flex-wrap gap-3">
             <Button className="bg-orange-500 hover:bg-orange-600">একটু পড়ে দেখুন</Button>
           </div>
           <div className="mt-5 flex flex-wrap gap-5 text-sm text-muted-foreground">
-            <span className="inline-flex items-center gap-2">
-              <Heart className="h-5 w-5" aria-hidden="true" /> Wishlist
-            </span>
-            <span className="inline-flex items-center gap-2">
-              <Share2 className="h-5 w-5" aria-hidden="true" /> বন্ধুদের সাথে শেয়ার করুন
-            </span>
+            <ShareProductButton product={product} />
           </div>
         </section>
         <aside>

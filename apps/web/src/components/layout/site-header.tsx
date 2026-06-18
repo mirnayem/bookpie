@@ -1,10 +1,9 @@
-import { Heart, ShoppingBag, UserRound } from "lucide-react";
 import Link from "next/link";
 import { DesktopNav } from "@/components/layout/desktop-nav";
+import { HeaderActions } from "@/components/layout/header-actions";
 import { Logo } from "@/components/layout/logo";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { SearchBar } from "@/components/layout/search-bar";
-import { Button } from "@/components/ui/button";
 
 export function SiteHeader() {
   return (
@@ -21,26 +20,7 @@ export function SiteHeader() {
           <Logo />
         </div>
         <SearchBar className="hidden flex-1 md:block lg:mx-10" />
-        <div className="ml-auto flex items-center gap-1">
-          <Button variant="ghost" size="icon" aria-label="Wishlist" asChild>
-            <Link href="/wishlist">
-              <Heart className="h-5 w-5" aria-hidden="true" />
-            </Link>
-          </Button>
-          <Button variant="ghost" size="icon" aria-label="Shopping bag" asChild>
-            <Link href="/cart">
-              <ShoppingBag className="h-5 w-5" aria-hidden="true" />
-            </Link>
-          </Button>
-          <Button variant="ghost" size="icon" aria-label="Account" asChild>
-            <Link href="/signin">
-              <UserRound className="h-5 w-5" aria-hidden="true" />
-            </Link>
-          </Button>
-          <Link href="/signin" className="hidden text-sm font-medium text-foreground/80 hover:text-primary md:inline">
-            Sign In
-          </Link>
-        </div>
+        <HeaderActions />
       </div>
       <div className="container-page pb-4 md:hidden">
         <SearchBar />

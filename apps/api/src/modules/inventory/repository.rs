@@ -24,19 +24,42 @@ impl InventoryRepository {
     ) -> Result<Vec<InventoryItem>, ApiError> {
         let rows = match (search, stock_status) {
             (Some(search), Some("low")) => {
-                sqlx::query(INVENTORY_SEARCH_LOW).bind(search).bind(limit).bind(offset).fetch_all(&self.pool).await?
+                sqlx::query(INVENTORY_SEARCH_LOW)
+                    .bind(search)
+                    .bind(limit)
+                    .bind(offset)
+                    .fetch_all(&self.pool)
+                    .await?
             }
             (Some(search), Some("out")) => {
-                sqlx::query(INVENTORY_SEARCH_OUT).bind(search).bind(limit).bind(offset).fetch_all(&self.pool).await?
+                sqlx::query(INVENTORY_SEARCH_OUT)
+                    .bind(search)
+                    .bind(limit)
+                    .bind(offset)
+                    .fetch_all(&self.pool)
+                    .await?
             }
             (Some(search), _) => {
-                sqlx::query(INVENTORY_SEARCH).bind(search).bind(limit).bind(offset).fetch_all(&self.pool).await?
+                sqlx::query(INVENTORY_SEARCH)
+                    .bind(search)
+                    .bind(limit)
+                    .bind(offset)
+                    .fetch_all(&self.pool)
+                    .await?
             }
             (None, Some("low")) => {
-                sqlx::query(INVENTORY_LOW).bind(limit).bind(offset).fetch_all(&self.pool).await?
+                sqlx::query(INVENTORY_LOW)
+                    .bind(limit)
+                    .bind(offset)
+                    .fetch_all(&self.pool)
+                    .await?
             }
             (None, Some("out")) => {
-                sqlx::query(INVENTORY_OUT).bind(limit).bind(offset).fetch_all(&self.pool).await?
+                sqlx::query(INVENTORY_OUT)
+                    .bind(limit)
+                    .bind(offset)
+                    .fetch_all(&self.pool)
+                    .await?
             }
             (None, _) => {
                 sqlx::query(

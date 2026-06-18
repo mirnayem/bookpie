@@ -80,6 +80,7 @@ impl SearchService {
 
     pub async fn index_book(&self, book: BookSearchDocument) -> Result<(), ApiError> {
         self.ensure_books_index().await?;
+        self.configure_books_index().await?;
         self.meili_request::<_, serde_json::Value>(
             Method::POST,
             &format!("indexes/{}/documents", self.config.meili_books_index),
@@ -104,6 +105,7 @@ impl SearchService {
         books: Vec<BookSearchDocument>,
     ) -> Result<ReindexResult, ApiError> {
         self.ensure_books_index().await?;
+        self.configure_books_index().await?;
         let indexed = books.len();
         self.meili_request::<_, serde_json::Value>(
             Method::POST,
@@ -132,6 +134,51 @@ impl SearchService {
             "Meilisearch index setup failed with status {}",
             response.status()
         )))
+    }
+
+    async fn configure_books_index(&self) -> Result<(), ApiError> {
+        self.meili_request::<_, serde_json::Value>(
+            Method::PATCH,
+            &format!("indexes/{}/settings", self.config.meili_books_index),
+            Some(serde_json::json!({
+                "searchableAttributes": [
+                    "title",
+                    "authorName",
+                    "publisherName",
+                    "categoryNames",
+                    "slug",
+                    "description"
+                ],
+                "filterableAttributes": [
+                    "authorName",
+                    "publisherName",
+                    "categoryNames",
+                    "stock"
+                ],
+                "sortableAttributes": [
+                    "price",
+                    "salePrice",
+                    "stock"
+                ],
+                "synonyms": {
+                    "islamic": ["ইসলামী", "islam", "deen"],
+                    "ইসলামী": ["islamic", "islam", "deen"],
+                    "book": ["বই", "boi"],
+                    "বই": ["book", "boi"],
+                    "stationery": ["স্টেশনারী", "stationary"],
+                    "স্টেশনারী": ["stationery", "stationary"]
+                },
+                "typoTolerance": {
+                    "enabled": true,
+                    "minWordSizeForTypos": {
+                        "oneTypo": 4,
+                        "twoTypos": 8
+                    }
+                }
+            })),
+        )
+        .await?;
+        Ok(())
     }
 
     async fn meili_request<TPayload, TResponse>(

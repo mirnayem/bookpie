@@ -40,8 +40,7 @@ CREATE TABLE IF NOT EXISTS customer_saved_payment_methods (
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_customer_saved_payment_methods_token_reference
-    ON customer_saved_payment_methods (provider, token_reference)
-    WHERE token_reference IS NOT NULL;
+    ON customer_saved_payment_methods (provider, token_reference);
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_customer_saved_payment_methods_default
     ON customer_saved_payment_methods (user_id)

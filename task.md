@@ -78,8 +78,8 @@ Roles:
 * [x] Default Address
 * [x] Geo-location storage
 * [x] Address validation
-* [ ] Saved cards
-* [ ] Saved payment methods
+* [x] Saved cards
+* [x] Saved payment methods
 
 ---
 
@@ -227,63 +227,63 @@ Goal: Build a backend-connected admin dashboard for managing BookPie bookstore o
 
 ### Categories
 
-* [ ] Category CRUD
-* [ ] Category hierarchy
-* [ ] Category image upload
+* [x] Category CRUD
+* [x] Category hierarchy
+* [x] Category image upload
 
 ### Brands
 
-* [ ] Brand CRUD
-* [ ] Brand logo upload
+* [x] Brand CRUD
+* [x] Brand logo upload
 
 ### Products
 
-* [ ] Product CRUD
-* [ ] Product image upload
-* [ ] Product gallery
-* [ ] Product variants
-* [ ] Product tags
-* [ ] Product specifications
-* [ ] Product attributes
-* [ ] Product SEO
-* [ ] Product barcode
+* [x] Product CRUD
+* [x] Product image upload
+* [x] Product gallery
+* [x] Product variants
+* [x] Product tags
+* [x] Product specifications
+* [x] Product attributes
+* [x] Product SEO
+* [x] Product barcode
 
 ### Pricing
 
-* [ ] Base price
-* [ ] Warehouse price
-* [ ] Discount price
-* [ ] Dynamic pricing
+* [x] Base price
+* [x] Warehouse price
+* [x] Discount price
+* [x] Dynamic pricing
 
 ---
 
 ## Phase 5 - Inventory
 
-* [ ] Warehouse model
-* [ ] Shelf model
-* [ ] SKU model
-* [ ] Stock model
-* [ ] Stock movement logs
-* [ ] Purchase orders
-* [ ] Supplier management
-* [ ] Batch tracking
-* [ ] Expiry tracking
-* [ ] Damage tracking
-* [ ] Inventory reconciliation
-* [ ] Cycle counting
+* [x] Warehouse model
+* [x] Shelf model
+* [x] SKU model
+* [x] Stock model
+* [x] Stock movement logs
+* [x] Purchase orders
+* [x] Supplier management
+* [x] Batch tracking
+* [x] Expiry tracking
+* [x] Damage tracking
+* [x] Inventory reconciliation
+* [x] Cycle counting
 
 ---
 
 ## Phase 6 - Search
 
-* [ ] Meilisearch integration
-* [ ] Product indexing
-* [ ] Category indexing
-* [ ] Search API
-* [ ] Autocomplete
-* [ ] Synonym support
-* [ ] Bengali search support
-* [ ] Search analytics
+* [x] Meilisearch integration
+* [x] Product indexing
+* [x] Category indexing
+* [x] Search API
+* [x] Autocomplete
+* [x] Synonym support
+* [x] Bengali search support
+* [x] Search analytics
 
 ---
 
@@ -291,24 +291,24 @@ Goal: Build a backend-connected admin dashboard for managing BookPie bookstore o
 
 ### Home
 
-* [ ] Hero banners
-* [ ] Featured products
-* [ ] Trending products
+* [x] Hero banners
+* [x] Featured products
+* [x] Trending products
 * [ ] Flash sale section
 * [ ] Recommended section
 
 ### Product Listing
 
-* [ ] Filters
-* [ ] Sorting
+* [x] Filters
+* [x] Sorting
 * [ ] Infinite scroll
-* [ ] Pagination
+* [x] Pagination
 
 ### Product Details
 
-* [ ] Image gallery
+* [x] Image gallery
 * [ ] Product reviews
-* [ ] Ratings
+* [x] Ratings
 * [ ] Related products
 * [ ] Frequently bought together
 

@@ -8,15 +8,16 @@ use validator::Validate;
 
 use crate::{
     error::ApiError,
+    middleware::auth::CurrentUser,
     modules::auth::{
         model::{
-            AdminUpdateUserRequest, AuthResponse, AuthUser, LoginRequest, LogoutRequest, OtpRequest, OtpResponse,
-            PasswordResetConfirmRequest, PasswordResetRequest, PasswordResetResponse,
-            RefreshTokenRequest, RegisterRequest, VerificationResponse, VerifyOtpRequest,
+            AdminUpdateUserRequest, AuthResponse, AuthUser, LoginRequest, LogoutRequest,
+            OtpRequest, OtpResponse, PasswordResetConfirmRequest, PasswordResetRequest,
+            PasswordResetResponse, RefreshTokenRequest, RegisterRequest, VerificationResponse,
+            VerifyOtpRequest,
         },
         service::AuthService,
     },
-    middleware::auth::CurrentUser,
     response::ApiResponse,
     state::AppState,
 };

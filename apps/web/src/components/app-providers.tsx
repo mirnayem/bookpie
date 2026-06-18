@@ -2,6 +2,7 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
+import { CartDrawer } from "@/components/cart/cart-drawer";
 
 export function AppProviders({ children }: Readonly<{ children: React.ReactNode }>) {
   const [queryClient] = useState(
@@ -16,5 +17,10 @@ export function AppProviders({ children }: Readonly<{ children: React.ReactNode 
       }),
   );
 
-  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+  return (
+    <QueryClientProvider client={queryClient}>
+      {children}
+      <CartDrawer />
+    </QueryClientProvider>
+  );
 }

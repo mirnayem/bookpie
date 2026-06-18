@@ -37,6 +37,7 @@ export function ProductsAdminPage() {
   const booksQuery = useQuery({ queryKey: ["admin", "books", serverSearch, page], queryFn: () => adminApi.books(token, { limit, offset: (page - 1) * limit, search: serverSearch }), enabled: Boolean(token) && debouncedSearch.trim().length !== 1 && debouncedSearch.trim().length !== 2 });
   const authorsQuery = useQuery({ queryKey: ["admin", "authors"], queryFn: () => adminApi.authors(token), enabled: Boolean(token) });
   const publishersQuery = useQuery({ queryKey: ["admin", "publishers"], queryFn: () => adminApi.publishers(token), enabled: Boolean(token) });
+  const brandsQuery = useQuery({ queryKey: ["admin", "brands"], queryFn: () => adminApi.brands(token), enabled: Boolean(token) });
   const categoriesQuery = useQuery({ queryKey: ["admin", "categories"], queryFn: () => adminApi.categories(token), enabled: Boolean(token) });
   const saveMutation = useMutation({
     mutationFn: (payload: UpsertBookRequest) => (editingBook ? adminApi.updateBook(token, editingBook.id, payload) : adminApi.createBook(token, payload)),
@@ -162,6 +163,7 @@ export function ProductsAdminPage() {
           book={editingBook}
           authors={authorsQuery.data ?? []}
           publishers={publishersQuery.data ?? []}
+          brands={brandsQuery.data ?? []}
           categories={categoriesQuery.data ?? []}
           busy={saveMutation.isPending}
           onSubmit={(payload) => saveMutation.mutate(payload)}
