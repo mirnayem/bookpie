@@ -32,6 +32,7 @@ async fn search_books(
     let result = service
         .search_books(&query.q, query.limit(), query.offset())
         .await?;
+    log_search_event(&state, &result.query, result.estimated_total_hits).await;
 
     Ok(Json(ApiResponse::ok(result)))
 }
@@ -63,4 +64,21 @@ async fn reindex_books(
     let result = search_service.reindex_books(books).await?;
 
     Ok(Json(ApiResponse::ok(result)))
+}
+
+async fn log_search_event(state: &AppState, query: &str, result_count: usize) {
+    if let Err(error) = sqlx::query(
+        r#"
+        INSERT INTO search_events (query, normalized_query, result_count, source)
+        VALUES ($1, $2, $3, 'web')
+        "#,
+    )
+    .bind(query)
+    .bind(query.trim().to_lowercase())
+    .bind(i32::try_from(result_count).unwrap_or(i32::MAX))
+    .execute(&state.pg_pool)
+    .await
+    {
+        tracing::warn!(error = %error, "failed to record search analytics event");
+    }
 }

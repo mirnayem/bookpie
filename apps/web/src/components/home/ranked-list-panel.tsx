@@ -11,7 +11,7 @@ type RankedListPanelProps = {
 export function RankedListPanel({ list }: RankedListPanelProps) {
   return (
     <article className="overflow-hidden rounded-lg border border-primary/50 bg-card">
-      <header className="bg-red-900 px-4 py-3 text-primary-foreground">
+      <header className="bg-primary px-4 py-3 text-primary-foreground">
         <h2 className="text-sm font-semibold">{list.title}</h2>
       </header>
       <div className="divide-y divide-primary/30">

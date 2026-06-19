@@ -1,6 +1,7 @@
 "use client";
 
 import { Search } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
@@ -9,8 +10,19 @@ type SearchBarProps = {
 };
 
 export function SearchBar({ className }: SearchBarProps) {
+  const router = useRouter();
+
   return (
-    <form className={cn("relative", className)} role="search">
+    <form
+      className={cn("relative", className)}
+      role="search"
+      onSubmit={(event) => {
+        event.preventDefault();
+        const formData = new FormData(event.currentTarget);
+        const query = String(formData.get("q") ?? "").trim();
+        if (query) router.push(`/search?q=${encodeURIComponent(query)}`);
+      }}
+    >
       <Input
         type="search"
         name="q"

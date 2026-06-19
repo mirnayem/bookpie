@@ -1,13 +1,20 @@
-use axum::{Json, Router, extract::State, routing::post};
+use axum::{
+    Json, Router,
+    extract::{Path, State},
+    routing::{patch, post},
+};
+use uuid::Uuid;
 use validator::Validate;
 
 use crate::{
     error::ApiError,
+    middleware::auth::CurrentUser,
     modules::auth::{
         model::{
-            AuthResponse, LoginRequest, LogoutRequest, OtpRequest, OtpResponse,
-            PasswordResetConfirmRequest, PasswordResetRequest, PasswordResetResponse,
-            RefreshTokenRequest, RegisterRequest, VerificationResponse, VerifyOtpRequest,
+            AdminUpdateUserRequest, AuthResponse, AuthUser, LoginRequest, LogoutRequest,
+            OtpRequest, OtpResponse, PasswordResetConfirmRequest, PasswordResetRequest,
+            PasswordResetResponse, RefreshTokenRequest, RegisterRequest, VerificationResponse,
+            VerifyOtpRequest,
         },
         service::AuthService,
     },
@@ -25,6 +32,7 @@ pub fn auth_router() -> Router<AppState> {
         .route("/password-reset/confirm", post(confirm_password_reset))
         .route("/otp", post(request_otp))
         .route("/otp/verify", post(verify_otp))
+        .route("/admin/users/{user_id}", patch(admin_update_user))
 }
 
 async fn register(
@@ -135,6 +143,23 @@ async fn verify_otp(
 
     let service = AuthService::new(state);
     let response = service.verify_otp(payload).await?;
+
+    Ok(Json(ApiResponse::ok(response)))
+}
+
+async fn admin_update_user(
+    State(state): State<AppState>,
+    user: CurrentUser,
+    Path(user_id): Path<Uuid>,
+    Json(payload): Json<AdminUpdateUserRequest>,
+) -> Result<Json<ApiResponse<AuthUser>>, ApiError> {
+    user.require_admin()?;
+    payload
+        .validate()
+        .map_err(|error| ApiError::Validation(error.to_string()))?;
+
+    let service = AuthService::new(state);
+    let response = service.admin_update_user(user_id, payload).await?;
 
     Ok(Json(ApiResponse::ok(response)))
 }

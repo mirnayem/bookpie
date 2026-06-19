@@ -5,7 +5,7 @@ use uuid::Uuid;
 use crate::{
     error::ApiError,
     middleware::auth::UserRole,
-    modules::auth::model::{OtpPurpose, RegisterRequest, UserRecord},
+    modules::auth::model::{AdminUpdateUserRequest, OtpPurpose, RegisterRequest, UserRecord},
 };
 
 #[derive(Clone)]
@@ -21,7 +21,7 @@ impl AuthRepository {
     pub async fn find_user_by_email(&self, email: &str) -> Result<Option<UserRecord>, ApiError> {
         let row = sqlx::query(
             r#"
-            SELECT id, name, email, password_hash, role, created_at
+            SELECT id, name, email, password_hash, role, is_active, created_at
             FROM users
             WHERE lower(email) = lower($1)
             "#,
@@ -36,7 +36,7 @@ impl AuthRepository {
     pub async fn find_user_by_id(&self, id: Uuid) -> Result<Option<UserRecord>, ApiError> {
         let row = sqlx::query(
             r#"
-            SELECT id, name, email, password_hash, role, created_at
+            SELECT id, name, email, password_hash, role, is_active, created_at
             FROM users
             WHERE id = $1
             "#,
@@ -58,13 +58,38 @@ impl AuthRepository {
             r#"
             INSERT INTO users (id, name, email, password_hash, role)
             VALUES ($1, $2, lower($3), $4, 'customer')
-            RETURNING id, name, email, password_hash, role, created_at
+            RETURNING id, name, email, password_hash, role, is_active, created_at
             "#,
         )
         .bind(id)
         .bind(payload.name.trim())
         .bind(payload.email.trim())
         .bind(password_hash)
+        .fetch_one(&self.pool)
+        .await?;
+
+        user_from_row(row)
+    }
+
+    pub async fn admin_update_user(
+        &self,
+        id: Uuid,
+        payload: &AdminUpdateUserRequest,
+    ) -> Result<UserRecord, ApiError> {
+        let existing = self.find_user_by_id(id).await?.ok_or(ApiError::NotFound)?;
+        let role = payload.role.clone().unwrap_or(existing.role);
+        let is_active = payload.is_active.unwrap_or(existing.is_active);
+        let row = sqlx::query(
+            r#"
+            UPDATE users
+            SET role = $2, is_active = $3, updated_at = now()
+            WHERE id = $1
+            RETURNING id, name, email, password_hash, role, is_active, created_at
+            "#,
+        )
+        .bind(id)
+        .bind(role_as_str(&role))
+        .bind(is_active)
         .fetch_one(&self.pool)
         .await?;
 
@@ -293,6 +318,7 @@ fn user_from_row(row: sqlx::postgres::PgRow) -> Result<UserRecord, ApiError> {
         email: row.get("email"),
         password_hash: row.get("password_hash"),
         role,
+        is_active: row.get("is_active"),
         created_at: row.get("created_at"),
     })
 }
@@ -307,6 +333,16 @@ fn parse_role(role: &str) -> Result<UserRole, ApiError> {
         other => Err(ApiError::Config(format!(
             "unknown user role in database: {other}"
         ))),
+    }
+}
+
+fn role_as_str(role: &UserRole) -> &'static str {
+    match role {
+        UserRole::Customer => "customer",
+        UserRole::WarehouseManager => "warehouse_manager",
+        UserRole::DeliveryAgent => "delivery_agent",
+        UserRole::Admin => "admin",
+        UserRole::SuperAdmin => "super_admin",
     }
 }
 

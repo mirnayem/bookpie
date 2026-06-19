@@ -19,19 +19,63 @@ impl InventoryRepository {
         &self,
         limit: i64,
         offset: i64,
+        search: Option<String>,
+        stock_status: Option<&str>,
     ) -> Result<Vec<InventoryItem>, ApiError> {
-        let rows = sqlx::query(
-            r#"
+        let rows = match (search, stock_status) {
+            (Some(search), Some("low")) => {
+                sqlx::query(INVENTORY_SEARCH_LOW)
+                    .bind(search)
+                    .bind(limit)
+                    .bind(offset)
+                    .fetch_all(&self.pool)
+                    .await?
+            }
+            (Some(search), Some("out")) => {
+                sqlx::query(INVENTORY_SEARCH_OUT)
+                    .bind(search)
+                    .bind(limit)
+                    .bind(offset)
+                    .fetch_all(&self.pool)
+                    .await?
+            }
+            (Some(search), _) => {
+                sqlx::query(INVENTORY_SEARCH)
+                    .bind(search)
+                    .bind(limit)
+                    .bind(offset)
+                    .fetch_all(&self.pool)
+                    .await?
+            }
+            (None, Some("low")) => {
+                sqlx::query(INVENTORY_LOW)
+                    .bind(limit)
+                    .bind(offset)
+                    .fetch_all(&self.pool)
+                    .await?
+            }
+            (None, Some("out")) => {
+                sqlx::query(INVENTORY_OUT)
+                    .bind(limit)
+                    .bind(offset)
+                    .fetch_all(&self.pool)
+                    .await?
+            }
+            (None, _) => {
+                sqlx::query(
+                    r#"
             SELECT id AS book_id, title, slug, cover_image_url, stock
             FROM books
             ORDER BY updated_at DESC
             LIMIT $1 OFFSET $2
             "#,
-        )
-        .bind(limit)
-        .bind(offset)
-        .fetch_all(&self.pool)
-        .await?;
+                )
+                .bind(limit)
+                .bind(offset)
+                .fetch_all(&self.pool)
+                .await?
+            }
+        };
 
         Ok(rows.into_iter().map(inventory_item_from_row).collect())
     }
@@ -154,4 +198,44 @@ const MOVEMENTS_BY_BOOK: &str = r#"
     WHERE book_id = $1
     ORDER BY created_at DESC
     LIMIT $2
+"#;
+
+const INVENTORY_SEARCH: &str = r#"
+    SELECT id AS book_id, title, slug, cover_image_url, stock
+    FROM books
+    WHERE title ILIKE $1 OR slug ILIKE $1
+    ORDER BY updated_at DESC
+    LIMIT $2 OFFSET $3
+"#;
+
+const INVENTORY_LOW: &str = r#"
+    SELECT id AS book_id, title, slug, cover_image_url, stock
+    FROM books
+    WHERE stock > 0 AND stock <= 5
+    ORDER BY updated_at DESC
+    LIMIT $1 OFFSET $2
+"#;
+
+const INVENTORY_OUT: &str = r#"
+    SELECT id AS book_id, title, slug, cover_image_url, stock
+    FROM books
+    WHERE stock = 0
+    ORDER BY updated_at DESC
+    LIMIT $1 OFFSET $2
+"#;
+
+const INVENTORY_SEARCH_LOW: &str = r#"
+    SELECT id AS book_id, title, slug, cover_image_url, stock
+    FROM books
+    WHERE (title ILIKE $1 OR slug ILIKE $1) AND stock > 0 AND stock <= 5
+    ORDER BY updated_at DESC
+    LIMIT $2 OFFSET $3
+"#;
+
+const INVENTORY_SEARCH_OUT: &str = r#"
+    SELECT id AS book_id, title, slug, cover_image_url, stock
+    FROM books
+    WHERE (title ILIKE $1 OR slug ILIKE $1) AND stock = 0
+    ORDER BY updated_at DESC
+    LIMIT $2 OFFSET $3
 "#;

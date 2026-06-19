@@ -12,10 +12,10 @@ use crate::{
     middleware::auth::{Claims, UserRole},
     modules::auth::{
         model::{
-            AuthResponse, AuthUser, LoginRequest, LogoutRequest, OtpRequest, OtpResponse,
-            PasswordResetConfirmRequest, PasswordResetRequest, PasswordResetResponse,
-            RefreshTokenRequest, RegisterRequest, TokenPair, UserRecord, VerificationResponse,
-            VerifyOtpRequest,
+            AdminUpdateUserRequest, AuthResponse, AuthUser, LoginRequest, LogoutRequest,
+            OtpRequest, OtpResponse, PasswordResetConfirmRequest, PasswordResetRequest,
+            PasswordResetResponse, RefreshTokenRequest, RegisterRequest, TokenPair, UserRecord,
+            VerificationResponse, VerifyOtpRequest,
         },
         repository::AuthRepository,
     },
@@ -61,6 +61,7 @@ impl AuthService {
             .await?
             .ok_or(ApiError::Unauthorized)?;
 
+        ensure_active(&user)?;
         verify_password(&payload.password, &user.password_hash)?;
         self.auth_response(user).await
     }
@@ -81,7 +82,23 @@ impl AuthService {
             .await?
             .ok_or(ApiError::NotFound)?;
 
+        ensure_active(&user)?;
         self.auth_response(user).await
+    }
+
+    pub async fn admin_update_user(
+        &self,
+        user_id: Uuid,
+        payload: AdminUpdateUserRequest,
+    ) -> Result<AuthUser, ApiError> {
+        if payload.role.is_none() && payload.is_active.is_none() {
+            return Err(ApiError::Validation(
+                "role or isActive must be provided".to_string(),
+            ));
+        }
+
+        let user = self.repository.admin_update_user(user_id, &payload).await?;
+        Ok(AuthUser::from(user))
     }
 
     pub async fn logout(&self, payload: LogoutRequest) -> Result<(), ApiError> {
@@ -222,6 +239,14 @@ fn verify_password(password: &str, password_hash: &str) -> Result<(), ApiError> 
     Argon2::default()
         .verify_password(password.as_bytes(), &parsed_hash)
         .map_err(|_| ApiError::Unauthorized)
+}
+
+fn ensure_active(user: &UserRecord) -> Result<(), ApiError> {
+    if user.is_active {
+        Ok(())
+    } else {
+        Err(ApiError::Unauthorized)
+    }
 }
 
 fn encode_access_token(

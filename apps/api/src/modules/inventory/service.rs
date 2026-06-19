@@ -26,7 +26,12 @@ impl InventoryService {
         query: InventoryListQuery,
     ) -> Result<Vec<InventoryItem>, ApiError> {
         self.repository
-            .list_inventory(query.limit(), query.offset())
+            .list_inventory(
+                query.limit(),
+                query.offset(),
+                query.search(),
+                query.stock_status(),
+            )
             .await
     }
 

@@ -30,6 +30,9 @@ pub struct StockMovement {
 pub struct InventoryListQuery {
     pub limit: Option<i64>,
     pub offset: Option<i64>,
+    pub search: Option<String>,
+    #[serde(rename = "stockStatus")]
+    pub stock_status: Option<String>,
 }
 
 impl InventoryListQuery {
@@ -39,6 +42,20 @@ impl InventoryListQuery {
 
     pub fn offset(&self) -> i64 {
         self.offset.unwrap_or(0).max(0)
+    }
+
+    pub fn search(&self) -> Option<String> {
+        self.search
+            .as_deref()
+            .map(str::trim)
+            .filter(|value| value.len() >= 3)
+            .map(|value| format!("%{value}%"))
+    }
+
+    pub fn stock_status(&self) -> Option<&str> {
+        self.stock_status
+            .as_deref()
+            .filter(|value| matches!(*value, "low" | "out"))
     }
 }
 

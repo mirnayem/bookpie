@@ -11,8 +11,8 @@ use crate::{
 
 use super::{
     model::{
-        Author, Book, Category, ListQuery, Publisher, UpsertAuthorRequest, UpsertBookRequest,
-        UpsertCategoryRequest, UpsertPublisherRequest,
+        Author, Book, Brand, Category, ListQuery, Publisher, UpsertAuthorRequest,
+        UpsertBookRequest, UpsertBrandRequest, UpsertCategoryRequest, UpsertPublisherRequest,
     },
     service::CatalogService,
 };
@@ -24,6 +24,7 @@ pub fn catalog_router() -> Router<AppState> {
         .route("/books/{slug}", get(book_details))
         .route("/authors", get(list_authors))
         .route("/publishers", get(list_publishers))
+        .route("/brands", get(list_brands))
         .route("/categories", get(list_categories))
         .route("/admin/books", post(create_book))
         .route("/admin/books/{id}", patch(update_book).delete(delete_book))
@@ -36,6 +37,11 @@ pub fn catalog_router() -> Router<AppState> {
         .route(
             "/admin/publishers/{id}",
             patch(update_publisher).delete(delete_publisher),
+        )
+        .route("/admin/brands", post(create_brand))
+        .route(
+            "/admin/brands/{id}",
+            patch(update_brand).delete(delete_brand),
         )
         .route("/admin/categories", post(create_category))
         .route(
@@ -201,6 +207,55 @@ async fn delete_publisher(
 
     let service = CatalogService::new(state.pg_pool.clone());
     service.delete_publisher(id).await?;
+
+    Ok(Json(ApiResponse::ok(())))
+}
+
+async fn list_brands(
+    State(state): State<AppState>,
+) -> Result<Json<ApiResponse<Vec<Brand>>>, ApiError> {
+    let service = CatalogService::new(state.pg_pool.clone());
+    let brands = service.list_brands().await?;
+
+    Ok(Json(ApiResponse::ok(brands)))
+}
+
+async fn create_brand(
+    State(state): State<AppState>,
+    user: CurrentUser,
+    Json(payload): Json<UpsertBrandRequest>,
+) -> Result<Json<ApiResponse<Brand>>, ApiError> {
+    user.require_admin()?;
+
+    let service = CatalogService::new(state.pg_pool.clone());
+    let brand = service.create_brand(payload).await?;
+
+    Ok(Json(ApiResponse::ok(brand)))
+}
+
+async fn update_brand(
+    State(state): State<AppState>,
+    user: CurrentUser,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<UpsertBrandRequest>,
+) -> Result<Json<ApiResponse<Brand>>, ApiError> {
+    user.require_admin()?;
+
+    let service = CatalogService::new(state.pg_pool.clone());
+    let brand = service.update_brand(id, payload).await?;
+
+    Ok(Json(ApiResponse::ok(brand)))
+}
+
+async fn delete_brand(
+    State(state): State<AppState>,
+    user: CurrentUser,
+    Path(id): Path<Uuid>,
+) -> Result<Json<ApiResponse<()>>, ApiError> {
+    user.require_admin()?;
+
+    let service = CatalogService::new(state.pg_pool.clone());
+    service.delete_brand(id).await?;
 
     Ok(Json(ApiResponse::ok(())))
 }

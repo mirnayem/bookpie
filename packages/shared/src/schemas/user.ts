@@ -13,8 +13,15 @@ export const userSchema = z.object({
   name: z.string().min(1),
   email: z.string().email(),
   role: userRoleSchema,
+  isActive: z.boolean().optional(),
   createdAt: z.string().datetime(),
+});
+
+export const adminUpdateUserRequestSchema = z.object({
+  role: userRoleSchema.optional(),
+  isActive: z.boolean().optional(),
 });
 
 export type UserRole = z.infer<typeof userRoleSchema>;
 export type User = z.infer<typeof userSchema>;
+export type AdminUpdateUserRequest = z.infer<typeof adminUpdateUserRequestSchema>;

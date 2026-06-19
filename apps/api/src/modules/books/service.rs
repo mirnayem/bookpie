@@ -6,8 +6,8 @@ use crate::error::ApiError;
 
 use super::{
     model::{
-        Author, Book, Category, ListQuery, Publisher, UpsertAuthorRequest, UpsertBookRequest,
-        UpsertCategoryRequest, UpsertPublisherRequest,
+        Author, Book, Brand, Category, ListQuery, Publisher, UpsertAuthorRequest,
+        UpsertBookRequest, UpsertBrandRequest, UpsertCategoryRequest, UpsertPublisherRequest,
     },
     repository::CatalogRepository,
 };
@@ -26,12 +26,12 @@ impl CatalogService {
 
     pub async fn list_books(&self, query: ListQuery) -> Result<Vec<Book>, ApiError> {
         self.repository
-            .list_books(query.limit(), query.offset())
+            .list_books(query.limit(), query.offset(), query.search())
             .await
     }
 
     pub async fn list_books_for_index(&self) -> Result<Vec<Book>, ApiError> {
-        self.repository.list_books(10_000, 0).await
+        self.repository.list_books(10_000, 0, None).await
     }
 
     pub async fn book_details(&self, slug: &str) -> Result<Book, ApiError> {
@@ -132,6 +132,38 @@ impl CatalogService {
         self.repository.delete_publisher(id).await
     }
 
+    pub async fn list_brands(&self) -> Result<Vec<Brand>, ApiError> {
+        self.repository.list_brands().await
+    }
+
+    pub async fn create_brand(&self, payload: UpsertBrandRequest) -> Result<Brand, ApiError> {
+        payload
+            .validate()
+            .map_err(|error| ApiError::Validation(error.to_string()))?;
+        self.repository
+            .create_brand(&payload)
+            .await
+            .map_err(map_database_error)
+    }
+
+    pub async fn update_brand(
+        &self,
+        id: Uuid,
+        payload: UpsertBrandRequest,
+    ) -> Result<Brand, ApiError> {
+        payload
+            .validate()
+            .map_err(|error| ApiError::Validation(error.to_string()))?;
+        self.repository
+            .update_brand(id, &payload)
+            .await
+            .map_err(map_database_error)
+    }
+
+    pub async fn delete_brand(&self, id: Uuid) -> Result<(), ApiError> {
+        self.repository.delete_brand(id).await
+    }
+
     pub async fn list_categories(&self) -> Result<Vec<Category>, ApiError> {
         self.repository.list_categories().await
     }
@@ -176,6 +208,14 @@ fn validate_book_payload(payload: &UpsertBookRequest) -> Result<(), ApiError> {
     if payload.sale_price > payload.price {
         return Err(ApiError::Validation(
             "salePrice must be less than or equal to price".to_string(),
+        ));
+    }
+
+    if let Some(warehouse_price) = payload.warehouse_price
+        && warehouse_price > payload.price
+    {
+        return Err(ApiError::Validation(
+            "warehousePrice must be less than or equal to price".to_string(),
         ));
     }
 

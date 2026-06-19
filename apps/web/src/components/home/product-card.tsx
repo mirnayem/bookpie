@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { DiscountBadge } from "@/components/home/discount-badge";
+import { ProductActions } from "@/components/product/product-actions";
 import { formatTaka } from "@/lib/format";
 import type { Product } from "@/types/storefront";
 
@@ -31,6 +32,7 @@ export function ProductCard({ product, compact = false }: ProductCardProps) {
           {product.originalPrice ? <span className="text-xs text-muted-foreground line-through">{formatTaka(product.originalPrice)}</span> : null}
         </div>
       </Link>
+      <ProductActions product={product} size="compact" />
     </article>
   );
 }

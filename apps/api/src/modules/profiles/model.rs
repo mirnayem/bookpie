@@ -1,4 +1,4 @@
-use chrono::NaiveDate;
+use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use validator::Validate;
@@ -31,6 +31,33 @@ pub struct CustomerAddress {
     pub latitude: Option<f64>,
     pub longitude: Option<f64>,
     pub is_default: bool,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SavedCard {
+    pub id: Uuid,
+    pub user_id: Uuid,
+    pub provider: String,
+    pub card_brand: String,
+    pub last4: String,
+    pub exp_month: i32,
+    pub exp_year: i32,
+    pub is_default: bool,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SavedPaymentMethod {
+    pub id: Uuid,
+    pub user_id: Uuid,
+    pub provider: String,
+    pub method_type: String,
+    pub display_label: String,
+    pub wallet_phone: Option<String>,
+    pub is_default: bool,
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Clone, Debug, Deserialize, Validate)]
@@ -69,10 +96,45 @@ pub struct UpsertAddressRequest {
     pub is_default: bool,
 }
 
+#[derive(Clone, Debug, Deserialize, Validate)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateSavedCardRequest {
+    #[validate(length(min = 1, max = 32))]
+    pub provider: String,
+    #[validate(length(min = 1, max = 32))]
+    pub card_brand: String,
+    #[validate(length(equal = 4))]
+    pub last4: String,
+    #[validate(range(min = 1, max = 12))]
+    pub exp_month: i32,
+    #[validate(range(min = 2026, max = 2100))]
+    pub exp_year: i32,
+    #[validate(length(min = 8, max = 180))]
+    pub token_reference: String,
+    pub is_default: bool,
+}
+
+#[derive(Clone, Debug, Deserialize, Validate)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateSavedPaymentMethodRequest {
+    #[validate(length(min = 1, max = 32))]
+    pub provider: String,
+    #[validate(length(min = 1, max = 32))]
+    pub method_type: String,
+    #[validate(length(min = 1, max = 120))]
+    pub display_label: String,
+    #[validate(length(min = 6, max = 32))]
+    pub wallet_phone: Option<String>,
+    #[validate(length(min = 8, max = 180))]
+    pub token_reference: Option<String>,
+    pub is_default: bool,
+}
+
 #[derive(Clone, Debug, Deserialize)]
 pub struct CustomerListQuery {
     pub limit: Option<i64>,
     pub offset: Option<i64>,
+    pub search: Option<String>,
 }
 
 impl CustomerListQuery {
@@ -82,6 +144,14 @@ impl CustomerListQuery {
 
     pub fn offset(&self) -> i64 {
         self.offset.unwrap_or(0).max(0)
+    }
+
+    pub fn search(&self) -> Option<String> {
+        self.search
+            .as_deref()
+            .map(str::trim)
+            .filter(|value| value.len() >= 3)
+            .map(|value| format!("%{value}%"))
     }
 }
 
