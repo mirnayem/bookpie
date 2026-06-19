@@ -33,10 +33,10 @@ export function SiteFooter() {
       </div>
       <div className="container-page grid gap-4 border-t py-6 text-sm text-muted-foreground md:grid-cols-3">
         <span className="inline-flex items-center gap-2">
-          <MapPin className="h-4 w-4" aria-hidden="true" /> House 310, Road 21 Mohakhali DOHS, Dhaka-1206
+          <MapPin className="h-4 w-4" aria-hidden="true" /> House 12, Road 4 Dhanmondi 9, Dhaka-1206
         </span>
         <span className="inline-flex items-center gap-2">
-          <Phone className="h-4 w-4" aria-hidden="true" /> 096 7777 1365
+          <Phone className="h-4 w-4" aria-hidden="true" /> 01917040322
         </span>
         <span className="inline-flex items-center gap-2">
           <Mail className="h-4 w-4" aria-hidden="true" /> support@bookpie.local

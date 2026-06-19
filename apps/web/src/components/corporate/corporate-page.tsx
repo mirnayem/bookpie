@@ -29,7 +29,7 @@ export function CorporatePage() {
     <main>
       <section className="bg-gradient-to-r from-red-600 to-red-800 py-20 text-center text-white">
         <div className="container-page">
-          <h1 className="text-3xl font-bold">ওয়াফিলাইফ কর্পোরেট সার্ভিস</h1>
+          <h1 className="text-3xl font-bold">Bookpie কর্পোরেট সার্ভিস</h1>
           <p className="mx-auto mt-4 max-w-xl leading-7">আপনার প্রতিষ্ঠান, স্কুল ও কলেজ, বিশ্ববিদ্যালয়, মাদ্রাসা বা সংস্থার জন্য যে কোনো পরিমাণ বই অর্ডার করুন সহজে।</p>
           <Button className="mt-8 bg-white text-primary hover:bg-white/90">Request a Quote</Button>
           <p className="mt-5 text-sm">corporate@bookpie.local | Call: 01324299979</p>

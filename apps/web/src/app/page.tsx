@@ -30,7 +30,7 @@ export default function HomePage() {
         <HeroCarousel banners={heroBanners} />
         <CategoryShowcaseGrid groups={showcaseGroups} />
         <ProductRail section={newBooks} />
-        <ProductRail section={safeFood} />
+        <ProductRail section={trending} />
         <CircularCategoryRail title="সেফ ফুড" href="/categories/safe-food" categories={circularCategories} />
         <ProductRail section={trending} />
         <ProductRail section={preOrder} />
