@@ -70,6 +70,25 @@ function queryString(params: ListParams = {}) {
   return value ? `?${value}` : "";
 }
 
+async function uploadProductImages(token: string | null, files: File[]) {
+  const formData = new FormData();
+
+  files.forEach((file) => formData.append("files", file));
+
+  const response = await fetch("/api/admin/uploads", {
+    method: "POST",
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    body: formData,
+  });
+  const payload = (await response.json().catch(() => null)) as { success: boolean; data: { urls: string[] } | null; error: { message: string } | null } | null;
+
+  if (!response.ok || !payload?.success || !payload.data) {
+    throw new Error(payload?.error?.message ?? response.statusText ?? "Image upload failed");
+  }
+
+  return payload.data.urls;
+}
+
 export const adminApi = {
   dashboardSummary: (token: string | null) => adminRequest<AdminDashboardSummary>(token, "/admin/dashboard/summary"),
   analyticsDashboard: (token: string | null) => adminRequest<DashboardMetrics>(token, "/admin/analytics/dashboard"),
@@ -82,6 +101,7 @@ export const adminApi = {
   retentionReport: (token: string | null) => adminRequest<RetentionReport>(token, "/admin/analytics/retention"),
   books: (token: string | null, params?: ListParams) => adminRequest<PaginatedResponse<Book>>(token, `/books${queryString(params)}`),
   book: (token: string | null, slug: string) => adminRequest<Book>(token, `/books/${slug}`),
+  uploadProductImages,
   createBook: (token: string | null, payload: UpsertBookRequest) => adminRequest<Book>(token, "/admin/books", { method: "POST", body: payload }),
   updateBook: (token: string | null, id: string, payload: UpsertBookRequest) => adminRequest<Book>(token, `/admin/books/${id}`, { method: "PATCH", body: payload }),
   deleteBook: (token: string | null, id: string) => adminRequest<void>(token, `/admin/books/${id}`, { method: "DELETE" }),

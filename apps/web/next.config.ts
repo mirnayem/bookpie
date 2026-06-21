@@ -11,6 +11,8 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "placehold.co" },
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "**.bookpie.local" },
+      { protocol: "http", hostname: "localhost" },
+      { protocol: "http", hostname: "127.0.0.1" },
     ],
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
