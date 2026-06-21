@@ -54,6 +54,7 @@ export const orderSchema = z.object({
   subtotal: z.number().int().nonnegative(),
   shippingFee: z.number().int().nonnegative(),
   discountTotal: z.number().int().nonnegative(),
+  taxTotal: z.number().int().nonnegative(),
   total: z.number().int().nonnegative(),
   items: z.array(orderItemSchema),
   delivery: deliveryAssignmentSchema.nullable(),
@@ -63,6 +64,9 @@ export const orderSchema = z.object({
 export const createOrderRequestSchema = z.object({
   addressId: z.string().uuid(),
   paymentProvider: paymentProviderSchema.nullable().optional(),
+  shippingFee: z.number().int().nonnegative().optional(),
+  couponDiscount: z.number().int().nonnegative().optional(),
+  taxTotal: z.number().int().nonnegative().optional(),
 });
 
 export const updateOrderStatusRequestSchema = z.object({
@@ -123,6 +127,7 @@ export const invoiceSchema = z.object({
   subtotal: z.number().int().nonnegative(),
   shippingFee: z.number().int().nonnegative(),
   discountTotal: z.number().int().nonnegative(),
+  taxTotal: z.number().int().nonnegative(),
   total: z.number().int().nonnegative(),
   lines: z.array(invoiceLineSchema),
 });

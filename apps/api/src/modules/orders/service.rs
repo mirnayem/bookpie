@@ -35,9 +35,7 @@ impl OrderService {
         payload
             .validate()
             .map_err(|error| ApiError::Validation(error.to_string()))?;
-        self.repository
-            .create_from_cart(user_id, payload.address_id, payload.payment_provider)
-            .await
+        self.repository.create_from_cart(user_id, payload).await
     }
 
     pub async fn user_orders(&self, user_id: UserId) -> Result<Vec<Order>, ApiError> {
@@ -287,6 +285,7 @@ impl OrderService {
             subtotal: order.subtotal,
             shipping_fee: order.shipping_fee,
             discount_total: order.discount_total,
+            tax_total: order.tax_total,
             total: order.total,
             lines: order
                 .items

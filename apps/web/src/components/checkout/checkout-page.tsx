@@ -171,6 +171,9 @@ export function CheckoutPage() {
       const order = await createApiOrder(tokens.accessToken, {
         addressId: address.id,
         paymentProvider: values.paymentMethod === "cash_on_delivery" ? null : values.paymentMethod,
+        shippingFee: currentDelivery,
+        couponDiscount,
+        taxTotal: tax,
       });
 
       setOrderNumber(order.id.slice(0, 8).toUpperCase());

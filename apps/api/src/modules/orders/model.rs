@@ -95,6 +95,7 @@ pub struct Order {
     pub subtotal: i32,
     pub shipping_fee: i32,
     pub discount_total: i32,
+    pub tax_total: i32,
     pub total: i32,
     pub items: Vec<OrderItem>,
     pub delivery: Option<DeliveryAssignment>,
@@ -147,6 +148,12 @@ pub struct DeliveryAssignment {
 pub struct CreateOrderRequest {
     pub address_id: Uuid,
     pub payment_provider: Option<PaymentProvider>,
+    #[validate(range(min = 0))]
+    pub shipping_fee: Option<i32>,
+    #[validate(range(min = 0))]
+    pub coupon_discount: Option<i32>,
+    #[validate(range(min = 0))]
+    pub tax_total: Option<i32>,
 }
 
 #[derive(Clone, Debug, Deserialize, Validate)]
@@ -236,6 +243,7 @@ pub struct Invoice {
     pub subtotal: i32,
     pub shipping_fee: i32,
     pub discount_total: i32,
+    pub tax_total: i32,
     pub total: i32,
     pub lines: Vec<InvoiceLine>,
 }

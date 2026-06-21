@@ -139,8 +139,9 @@ export function OrdersAdminPage({ deliveryOnly = false }: OrdersAdminPageProps) 
                 <h3 className="mb-3 font-semibold">Totals</h3>
                 <div className="space-y-2 text-sm">
                   <p className="flex justify-between"><span>Subtotal</span><span>{formatTaka(selectedOrder.subtotal)}</span></p>
-                  <p className="flex justify-between"><span>Shipping</span><span>{formatTaka(selectedOrder.shippingFee)}</span></p>
                   <p className="flex justify-between"><span>Discount</span><span>-{formatTaka(selectedOrder.discountTotal)}</span></p>
+                  <p className="flex justify-between"><span>Tax/VAT</span><span>{formatTaka(selectedOrder.taxTotal)}</span></p>
+                  <p className="flex justify-between"><span>Delivery fee</span><span>{formatTaka(selectedOrder.shippingFee)}</span></p>
                   <p className="flex justify-between border-t pt-2 font-semibold"><span>Total</span><span>{formatTaka(selectedOrder.total)}</span></p>
                 </div>
               </div>

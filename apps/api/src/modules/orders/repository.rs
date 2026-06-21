@@ -4,8 +4,8 @@ use uuid::Uuid;
 use crate::{error::ApiError, models::ids::UserId};
 
 use super::model::{
-    AssignDeliveryRequest, DeliveryAssignment, DeliveryStatus, Order, OrderItem, OrderStatus,
-    PaymentProvider, PaymentStatus,
+    AssignDeliveryRequest, CreateOrderRequest, DeliveryAssignment, DeliveryStatus, Order,
+    OrderItem, OrderStatus, PaymentProvider, PaymentStatus,
 };
 
 #[derive(Clone)]
@@ -21,10 +21,10 @@ impl OrderRepository {
     pub async fn create_from_cart(
         &self,
         user_id: UserId,
-        address_id: Uuid,
-        payment_provider: Option<PaymentProvider>,
+        payload: CreateOrderRequest,
     ) -> Result<Order, ApiError> {
         let mut transaction = self.pool.begin().await?;
+        let address_id = payload.address_id;
         verify_address(&mut transaction, user_id.0, address_id).await?;
         let cart_id = cart_id(&mut transaction, user_id.0).await?;
         let cart_items = cart_items(&mut transaction, cart_id).await?;
@@ -41,31 +41,48 @@ impl OrderRepository {
                 WHERE id = $1 AND stock >= $2
                 "#,
             )
-            .bind(item.book_id)
-            .bind(item.quantity)
+            .bind(item.order_item.book_id)
+            .bind(item.order_item.quantity)
             .execute(&mut *transaction)
             .await?;
 
             if updated.rows_affected() == 0 {
                 return Err(ApiError::Validation(format!(
                     "insufficient stock for {}",
-                    item.title
+                    item.order_item.title
                 )));
             }
         }
 
-        let subtotal: i32 = cart_items.iter().map(|item| item.line_total).sum();
-        let shipping_fee = 0;
-        let discount_total = 0;
-        let total = subtotal + shipping_fee - discount_total;
-        let provider = payment_provider.as_ref().map(PaymentProvider::as_str);
+        let sale_subtotal: i32 = cart_items
+            .iter()
+            .map(|item| item.order_item.line_total)
+            .sum();
+        let subtotal: i32 = cart_items.iter().map(|item| item.original_line_total).sum();
+        let product_discount = (subtotal - sale_subtotal).max(0);
+        let coupon_discount = payload.coupon_discount.unwrap_or_default();
+
+        if coupon_discount > sale_subtotal {
+            return Err(ApiError::Validation(
+                "couponDiscount cannot exceed payable item subtotal".to_string(),
+            ));
+        }
+
+        let shipping_fee = payload.shipping_fee.unwrap_or_default();
+        let tax_total = payload.tax_total.unwrap_or_default();
+        let discount_total = product_discount + coupon_discount;
+        let total = (subtotal - discount_total + shipping_fee + tax_total).max(0);
+        let provider = payload
+            .payment_provider
+            .as_ref()
+            .map(PaymentProvider::as_str);
         let order_id: Uuid = sqlx::query(
             r#"
             INSERT INTO orders (
                 user_id, address_id, status, payment_provider, payment_status,
-                subtotal, shipping_fee, discount_total, total
+                subtotal, shipping_fee, discount_total, tax_total, total
             )
-            VALUES ($1, $2, 'pending', $3, 'pending', $4, $5, $6, $7)
+            VALUES ($1, $2, 'pending', $3, 'pending', $4, $5, $6, $7, $8)
             RETURNING id
             "#,
         )
@@ -75,6 +92,7 @@ impl OrderRepository {
         .bind(subtotal)
         .bind(shipping_fee)
         .bind(discount_total)
+        .bind(tax_total)
         .bind(total)
         .fetch_one(&mut *transaction)
         .await?
@@ -88,11 +106,11 @@ impl OrderRepository {
                 "#,
             )
             .bind(order_id)
-            .bind(item.book_id)
-            .bind(&item.title)
-            .bind(item.quantity)
-            .bind(item.unit_price)
-            .bind(item.line_total)
+            .bind(item.order_item.book_id)
+            .bind(&item.order_item.title)
+            .bind(item.order_item.quantity)
+            .bind(item.order_item.unit_price)
+            .bind(item.order_item.line_total)
             .execute(&mut *transaction)
             .await?;
         }
@@ -347,11 +365,13 @@ async fn cart_id(
 async fn cart_items(
     transaction: &mut sqlx::Transaction<'_, sqlx::Postgres>,
     cart_id: Uuid,
-) -> Result<Vec<OrderItem>, ApiError> {
+) -> Result<Vec<CartOrderItem>, ApiError> {
     let rows = sqlx::query(
         r#"
         SELECT ci.book_id, b.title, ci.quantity, b.sale_price AS unit_price,
-               (ci.quantity * b.sale_price) AS line_total
+               b.price AS original_unit_price,
+               (ci.quantity * b.sale_price) AS line_total,
+               (ci.quantity * b.price) AS original_line_total
         FROM cart_items ci
         INNER JOIN books b ON b.id = ci.book_id
         WHERE ci.cart_id = $1
@@ -361,7 +381,7 @@ async fn cart_items(
     .fetch_all(&mut **transaction)
     .await?;
 
-    Ok(rows.into_iter().map(order_item_from_row).collect())
+    Ok(rows.into_iter().map(cart_order_item_from_row).collect())
 }
 
 async fn insert_timeline(
@@ -423,11 +443,30 @@ async fn row_to_order(pool: &PgPool, row: PgRow) -> Result<Order, ApiError> {
         subtotal: row.get("subtotal"),
         shipping_fee: row.get("shipping_fee"),
         discount_total: row.get("discount_total"),
+        tax_total: row.get("tax_total"),
         total: row.get("total"),
         items,
         delivery,
         created_at: row.get("created_at"),
     })
+}
+
+struct CartOrderItem {
+    order_item: OrderItem,
+    original_line_total: i32,
+}
+
+fn cart_order_item_from_row(row: PgRow) -> CartOrderItem {
+    CartOrderItem {
+        order_item: OrderItem {
+            book_id: row.get("book_id"),
+            title: row.get("title"),
+            quantity: row.get("quantity"),
+            unit_price: row.get("unit_price"),
+            line_total: row.get("line_total"),
+        },
+        original_line_total: row.get("original_line_total"),
+    }
 }
 
 fn order_item_from_row(row: PgRow) -> OrderItem {
@@ -503,14 +542,14 @@ fn parse_delivery_status(value: &str) -> Result<DeliveryStatus, ApiError> {
 
 const ORDER_SELECT_BY_ID: &str = r#"
     SELECT id, user_id, address_id, status, payment_provider, payment_status,
-           subtotal, shipping_fee, discount_total, total, created_at
+           subtotal, shipping_fee, discount_total, tax_total, total, created_at
     FROM orders
     WHERE id = $1
 "#;
 
 const ORDER_SELECT_BY_USER: &str = r#"
     SELECT id, user_id, address_id, status, payment_provider, payment_status,
-           subtotal, shipping_fee, discount_total, total, created_at
+           subtotal, shipping_fee, discount_total, tax_total, total, created_at
     FROM orders
     WHERE user_id = $1
     ORDER BY created_at DESC
@@ -518,14 +557,14 @@ const ORDER_SELECT_BY_USER: &str = r#"
 
 const ORDER_SELECT_BY_USER_AND_ID: &str = r#"
     SELECT id, user_id, address_id, status, payment_provider, payment_status,
-           subtotal, shipping_fee, discount_total, total, created_at
+           subtotal, shipping_fee, discount_total, tax_total, total, created_at
     FROM orders
     WHERE user_id = $1 AND id = $2
 "#;
 
 const ORDER_SELECT_ADMIN: &str = r#"
     SELECT id, user_id, address_id, status, payment_provider, payment_status,
-           subtotal, shipping_fee, discount_total, total, created_at
+           subtotal, shipping_fee, discount_total, tax_total, total, created_at
     FROM orders
     ORDER BY created_at DESC
     LIMIT $1 OFFSET $2
@@ -533,7 +572,7 @@ const ORDER_SELECT_ADMIN: &str = r#"
 
 const ORDER_SELECT_BY_STATUS: &str = r#"
     SELECT id, user_id, address_id, status, payment_provider, payment_status,
-           subtotal, shipping_fee, discount_total, total, created_at
+           subtotal, shipping_fee, discount_total, tax_total, total, created_at
     FROM orders
     WHERE status = $1
     ORDER BY created_at DESC
