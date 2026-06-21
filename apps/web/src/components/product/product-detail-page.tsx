@@ -1,10 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ProductActions } from "@/components/product/product-actions";
+import { ProductSampleButton } from "@/components/product/product-sample-button";
 import { ShareProductButton } from "@/components/product/share-product-button";
 import { ProductSuggestionCard } from "@/components/product/product-suggestion-card";
 import { RatingBars } from "@/components/product/rating-bars";
-import { Button } from "@/components/ui/button";
 import { formatTaka } from "@/lib/format";
 import type { Product, PromoBanner } from "@/types/storefront";
 
@@ -56,7 +56,7 @@ export function ProductDetailPage({ product, suggestions, promos }: ProductDetai
             <ProductActions product={product} />
           </div>
           <div className="mt-3 flex flex-wrap gap-3">
-            <Button className="bg-orange-500 hover:bg-orange-600">একটু পড়ে দেখুন</Button>
+            <ProductSampleButton product={product} />
           </div>
           <div className="mt-5 flex flex-wrap gap-5 text-sm text-muted-foreground">
             <ShareProductButton product={product} />

@@ -1,11 +1,20 @@
-import { Mail, MapPin, Phone, Send } from "lucide-react";
+import { Mail, MapPin, Phone } from "lucide-react";
 import { FooterLinkGroup } from "@/components/layout/footer-link-group";
 import { Logo } from "@/components/layout/logo";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { NewsletterForm } from "@/components/layout/newsletter-form";
 
-const importantLinks = ["যোগাযোগ করুন", "শপিং ব্যাগ", "প্রশ্নোত্তর", "শর্তাবলী"];
-const popularLinks = ["আপনার পছন্দের তালিকা", "জেনারেল ও একাডেমিক বই", "জনপ্রিয় লেখক", "জনপ্রিয় প্রকাশক"];
+const importantLinks = [
+  { label: "যোগাযোগ করুন", href: "/contact" },
+  { label: "শপিং ব্যাগ", href: "/cart" },
+  { label: "প্রশ্নোত্তর", href: "/faq" },
+  { label: "শর্তাবলী", href: "/terms" },
+];
+const popularLinks = [
+  { label: "আপনার পছন্দের তালিকা", href: "/wishlist" },
+  { label: "জেনারেল ও একাডেমিক বই", href: "/general-books" },
+  { label: "জনপ্রিয় লেখক", href: "/authors" },
+  { label: "জনপ্রিয় প্রকাশক", href: "/publishers" },
+];
 
 export function SiteFooter() {
   return (
@@ -23,12 +32,7 @@ export function SiteFooter() {
         <div>
           <h2 className="text-sm font-semibold">Subscribe Now</h2>
           <p className="mt-3 text-sm leading-6 text-muted-foreground">Subscribe for newsletter and featured book updates.</p>
-          <form className="mt-4 flex gap-2">
-            <Input type="email" placeholder="Write your email here" aria-label="Newsletter email" />
-            <Button type="submit" size="icon" aria-label="Subscribe">
-              <Send className="h-4 w-4" aria-hidden="true" />
-            </Button>
-          </form>
+          <NewsletterForm />
         </div>
       </div>
       <div className="container-page grid gap-4 border-t py-6 text-sm text-muted-foreground md:grid-cols-3">

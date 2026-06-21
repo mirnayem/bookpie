@@ -27,6 +27,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-background">
       <SiteHeader />
       <main>
+        <h1 className="sr-only">BookPie online bookstore</h1>
         <HeroCarousel banners={heroBanners} />
         <CategoryShowcaseGrid groups={showcaseGroups} />
         <ProductRail section={newBooks} />

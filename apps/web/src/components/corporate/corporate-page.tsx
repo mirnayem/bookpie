@@ -3,6 +3,7 @@ import { BenefitCard } from "@/components/corporate/benefit-card";
 import { CorporateForm } from "@/components/corporate/corporate-form";
 import { ServiceCard } from "@/components/corporate/service-card";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 const benefits = [
   { icon: BadgeDollarSign, title: "বিশেষ কর্পোরেট মূল্য", description: "বড় অর্ডারে সেরা মূল্য ও একক কোটেশনের সুবিধা।" },
@@ -31,7 +32,9 @@ export function CorporatePage() {
         <div className="container-page">
           <h1 className="text-3xl font-bold">Bookpie কর্পোরেট সার্ভিস</h1>
           <p className="mx-auto mt-4 max-w-xl leading-7">আপনার প্রতিষ্ঠান, স্কুল ও কলেজ, বিশ্ববিদ্যালয়, মাদ্রাসা বা সংস্থার জন্য যে কোনো পরিমাণ বই অর্ডার করুন সহজে।</p>
-          <Button className="mt-8 bg-white text-primary hover:bg-white/90">Request a Quote</Button>
+          <Button asChild className="mt-8 bg-white text-primary hover:bg-white/90">
+            <Link href="#quote">Request a Quote</Link>
+          </Button>
           <p className="mt-5 text-sm">corporate@bookpie.local | Call: 01324299979</p>
         </div>
       </section>
@@ -54,7 +57,7 @@ export function CorporatePage() {
           </div>
         </div>
       </section>
-      <section className="container-page grid gap-10 py-14 md:grid-cols-2">
+      <section id="quote" className="container-page grid gap-10 py-14 md:grid-cols-2">
         <div>
           <h2 className="text-2xl font-bold">কোটেশন রিকোয়েস্ট করুন</h2>
           <p className="mt-4 max-w-md text-sm leading-7 text-muted-foreground">আপনার প্রয়োজনীয় বইয়ের তালিকা এবং তথ্য দিন। আমাদের টিম ২৪ ঘণ্টার মধ্যে যোগাযোগ করবে।</p>

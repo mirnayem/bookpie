@@ -2,9 +2,11 @@ import type { ListingFilter } from "@/types/storefront";
 
 type ListingFilterPanelProps = {
   filter: ListingFilter;
+  selectedOptions: string[];
+  onToggle: (option: string) => void;
 };
 
-export function ListingFilterPanel({ filter }: ListingFilterPanelProps) {
+export function ListingFilterPanel({ filter, selectedOptions, onToggle }: ListingFilterPanelProps) {
   return (
     <section className="overflow-hidden rounded-md border bg-card">
       <h2 className="bg-muted px-4 py-3 text-sm font-semibold">{filter.title}</h2>
@@ -12,7 +14,12 @@ export function ListingFilterPanel({ filter }: ListingFilterPanelProps) {
         {filter.options.map((option) => (
           <label key={option} className="flex cursor-pointer items-center justify-between px-4 py-3 text-sm text-foreground/75">
             {option}
-            <input type="checkbox" className="h-4 w-4 rounded-full border-border accent-primary" />
+            <input
+              type="checkbox"
+              checked={selectedOptions.includes(option)}
+              className="h-4 w-4 rounded-full border-border accent-primary"
+              onChange={() => onToggle(option)}
+            />
           </label>
         ))}
       </div>

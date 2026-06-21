@@ -2,10 +2,13 @@
 
 import { Eye, X } from "lucide-react";
 import Image from "next/image";
+import type { FormEvent } from "react";
 import { useState } from "react";
 import { Logo } from "@/components/layout/logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { createDemoAuthResponse } from "@/lib/demo-auth";
+import { useAuthStore } from "@/stores/auth-store";
 
 type LoginModalProps = {
   illustration: string;
@@ -13,6 +16,25 @@ type LoginModalProps = {
 
 export function LoginModal({ illustration }: LoginModalProps) {
   const [open, setOpen] = useState(false);
+  const setAuth = useAuthStore((state) => state.setAuth);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  const submitEmailLogin = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!email.includes("@") || password.length < 6) {
+      setError("সঠিক ইমেইল এবং অন্তত ৬ অক্ষরের পাসওয়ার্ড দিন");
+      return;
+    }
+
+    setAuth(createDemoAuthResponse(email));
+    setError(null);
+    setNotice(null);
+    setOpen(false);
+  };
 
   return (
     <>
@@ -36,19 +58,21 @@ export function LoginModal({ illustration }: LoginModalProps) {
             <div className="p-8">
               <Logo />
               <h2 className="mt-5 text-xl font-bold">Login</h2>
-              <form className="mt-5 space-y-4">
+              <form className="mt-5 space-y-4" onSubmit={submitEmailLogin}>
                 <label className="grid gap-2 text-sm">
                   Email Address
-                  <Input type="email" />
+                  <Input type="email" value={email} onChange={(event) => setEmail(event.target.value)} />
                 </label>
                 <label className="grid gap-2 text-sm">
                   Password
                   <span className="relative">
-                    <Input type="password" className="pr-10" />
+                    <Input type="password" className="pr-10" value={password} onChange={(event) => setPassword(event.target.value)} />
                     <Eye className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" aria-hidden="true" />
                   </span>
                 </label>
-                <button type="button" className="ml-auto block text-xs text-muted-foreground hover:text-primary">
+                {error ? <p className="text-xs font-medium text-destructive">{error}</p> : null}
+                {notice ? <p className="text-xs font-medium text-primary">{notice}</p> : null}
+                <button type="button" className="ml-auto block text-xs text-muted-foreground hover:text-primary" onClick={() => setNotice("ডেমো reset link প্রস্তুত করা হয়েছে।")}>
                   Forgot password?
                 </button>
                 <Button type="submit" className="w-full">

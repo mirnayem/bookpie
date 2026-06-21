@@ -9,9 +9,7 @@ type SearchRouteProps = {
 export default async function SearchRoute({ searchParams }: SearchRouteProps) {
   const { q = "" } = await searchParams;
   const query = q.trim().toLowerCase();
-  const results = query
-    ? products.filter((product) => `${product.title} ${product.author ?? ""} ${product.slug}`.toLowerCase().includes(query))
-    : products.slice(0, 12);
+  const results = getSearchResults(query);
 
   return (
     <>
@@ -27,4 +25,11 @@ export default async function SearchRoute({ searchParams }: SearchRouteProps) {
       </main>
     </>
   );
+}
+
+function getSearchResults(query: string) {
+  if (!query) return products.slice(0, 12);
+  if (["book", "books", "product", "products"].includes(query)) return products;
+
+  return products.filter((product) => `${product.title} ${product.author ?? ""} ${product.slug}`.toLowerCase().includes(query));
 }
