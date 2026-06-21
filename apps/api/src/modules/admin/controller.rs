@@ -15,8 +15,7 @@ async fn dashboard_summary(
     user: CurrentUser,
 ) -> Result<Json<ApiResponse<AdminDashboardSummary>>, ApiError> {
     user.require_admin()?;
-    if let Ok(Some(summary)) =
-        cache::get_json(&state.redis_client, "admin:dashboard:summary").await
+    if let Ok(Some(summary)) = cache::get_json(&state.redis_client, "admin:dashboard:summary").await
     {
         return Ok(Json(ApiResponse::ok(summary)));
     }

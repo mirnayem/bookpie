@@ -2,6 +2,15 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import {
+  addApiCartItem,
+  cartItemToProduct,
+  clearApiCart,
+  getApiCart,
+  removeApiCartItem,
+  updateApiCartItem,
+} from "@/lib/storefront-api";
+import { useAuthStore } from "@/stores/auth-store";
 import type { Product } from "@/types/storefront";
 
 export type CartLine = {
@@ -19,6 +28,7 @@ type CartUiState = {
   updateQuantity: (productId: string, quantity: number) => void;
   removeItem: (productId: string) => void;
   clearCart: () => void;
+  syncCart: () => Promise<void>;
   mergeGuestCartAfterLogin: () => void;
   toggleWishlist: (product: Product) => void;
   removeWishlist: (productId: string) => void;
@@ -40,6 +50,7 @@ export const useCartStore = create<CartUiState>()(
       close: () => set({ isOpen: false }),
       addItem: (product, quantity = 1) => {
         const safeQuantity = Math.max(1, quantity);
+        const token = useAuthStore.getState().tokens?.accessToken;
         set((state) => {
           const existing = state.items.find((item) => item.product.id === product.id);
 
@@ -54,17 +65,58 @@ export const useCartStore = create<CartUiState>()(
 
           return { items: [...state.items, { product, quantity: safeQuantity }], isOpen: true };
         });
+
+        if (token) {
+          addApiCartItem(token, product.id, safeQuantity)
+            .then((cart) => set({ items: apiCartToLines(cart), isOpen: true }))
+            .catch(() => undefined);
+        }
       },
       updateQuantity: (productId, quantity) => {
         const safeQuantity = Math.max(1, quantity);
+        const token = useAuthStore.getState().tokens?.accessToken;
         set((state) => ({
           items: state.items.map((item) => (item.product.id === productId ? { ...item, quantity: safeQuantity } : item)),
         }));
+
+        if (token) {
+          updateApiCartItem(token, productId, safeQuantity)
+            .then((cart) => set({ items: apiCartToLines(cart) }))
+            .catch(() => undefined);
+        }
       },
       removeItem: (productId) => {
+        const token = useAuthStore.getState().tokens?.accessToken;
         set((state) => ({ items: state.items.filter((item) => item.product.id !== productId) }));
+
+        if (token) {
+          removeApiCartItem(token, productId)
+            .then((cart) => set({ items: apiCartToLines(cart) }))
+            .catch(() => undefined);
+        }
       },
-      clearCart: () => set({ items: [] }),
+      clearCart: () => {
+        const token = useAuthStore.getState().tokens?.accessToken;
+        set({ items: [] });
+
+        if (token) {
+          clearApiCart(token)
+            .then((cart) => set({ items: apiCartToLines(cart) }))
+            .catch(() => undefined);
+        }
+      },
+      syncCart: async () => {
+        const token = useAuthStore.getState().tokens?.accessToken;
+        if (!token) return;
+
+        const localItems = get().items;
+        for (const item of localItems) {
+          await addApiCartItem(token, item.product.id, item.quantity).catch(() => undefined);
+        }
+
+        const cart = await getApiCart(token);
+        set({ items: apiCartToLines(cart) });
+      },
       mergeGuestCartAfterLogin: () => {
         set((state) => {
           const itemsById = new Map<string, CartLine>();
@@ -114,3 +166,10 @@ export const useCartStore = create<CartUiState>()(
     },
   ),
 );
+
+function apiCartToLines(cart: Awaited<ReturnType<typeof getApiCart>>): CartLine[] {
+  return cart.items.map((item) => ({
+    product: cartItemToProduct(item),
+    quantity: item.quantity,
+  }));
+}

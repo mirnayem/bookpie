@@ -25,7 +25,10 @@ pub fn notification_router() -> Router<AppState> {
         .route("/admin/notifications/push", post(send_push))
         .route("/admin/notifications/whatsapp", post(send_whatsapp))
         .route("/admin/notifications/order", post(order_notification))
-        .route("/admin/notifications/marketing", post(marketing_notifications))
+        .route(
+            "/admin/notifications/marketing",
+            post(marketing_notifications),
+        )
 }
 
 async fn events(

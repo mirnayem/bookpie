@@ -4,10 +4,14 @@ import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Logo } from "@/components/layout/logo";
-import { navigationItems } from "@/components/layout/navigation";
+import { navigationItems, type NavigationItem } from "@/components/layout/navigation";
 import { Button } from "@/components/ui/button";
 
-export function MobileNav() {
+type MobileNavProps = {
+  items?: NavigationItem[];
+};
+
+export function MobileNav({ items = navigationItems }: MobileNavProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -31,7 +35,7 @@ export function MobileNav() {
               </Button>
             </div>
             <nav aria-label="Mobile navigation" className="grid gap-1 p-4">
-              {navigationItems.map((item) => (
+              {items.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}

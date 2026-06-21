@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { formatTaka } from "@/lib/format";
+import { createApiAddress, createApiOrder, validateApiCoupon } from "@/lib/storefront-api";
+import { useAuthStore } from "@/stores/auth-store";
 import { useCartStore } from "@/stores/cart-store";
 
 const checkoutSchema = z.object({
@@ -54,14 +56,19 @@ const deliverySlots = [
   { label: "Express delivery (next day)", value: "express", fee: 40 },
 ] as const;
 
-const validCoupons = new Set(["BOOKPIE10", "SAVE10"]);
-
 export function CheckoutPage() {
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
   const [couponError, setCouponError] = useState<string | null>(null);
+  const [couponDiscount, setCouponDiscount] = useState(0);
+  const [freeShipping, setFreeShipping] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const tokens = useAuthStore((state) => state.tokens);
+  const user = useAuthStore((state) => state.user);
   const items = useCartStore((state) => state.items);
   const clearCart = useCartStore((state) => state.clearCart);
+  const syncCart = useCartStore((state) => state.syncCart);
   const subtotal = useCartStore((state) => state.originalSubtotal());
   const payable = useCartStore((state) => state.subtotal());
   const discount = Math.max(subtotal - payable, 0);
@@ -70,7 +77,7 @@ export function CheckoutPage() {
     defaultValues: {
       name: "",
       phone: "",
-      email: "",
+      email: user?.email ?? "",
       city: "ঢাকা",
       address: "",
       addressPreset: "custom",
@@ -85,8 +92,7 @@ export function CheckoutPage() {
   const orderItems = useMemo(() => items.map((item) => `${item.product.title} x ${item.quantity}`), [items]);
   const currentDeliveryBase = watchedCity === "ঢাকা" ? 79 : 120;
   const currentSlotFee = deliverySlots.find((slot) => slot.value === watchedDeliverySlot)?.fee ?? 0;
-  const currentDelivery = items.length ? currentDeliveryBase + currentSlotFee : 0;
-  const couponDiscount = appliedCoupon ? Math.round(payable * 0.1) : 0;
+  const currentDelivery = items.length && !freeShipping ? currentDeliveryBase + currentSlotFee : 0;
   const taxableTotal = Math.max(payable - couponDiscount, 0);
   const tax = Math.round(taxableTotal * 0.05);
   const currentTotal = taxableTotal + currentDelivery + tax;
@@ -102,28 +108,76 @@ export function CheckoutPage() {
     form.setValue("address", address.address, { shouldValidate: true });
   };
 
-  const applyCoupon = () => {
+  const applyCoupon = async () => {
     const normalized = form.getValues("couponCode")?.trim().toUpperCase();
 
     if (!normalized) {
       setAppliedCoupon(null);
+      setCouponDiscount(0);
+      setFreeShipping(false);
       setCouponError("কুপন কোড লিখুন");
       return;
     }
 
-    if (!validCoupons.has(normalized)) {
+    try {
+      const validation = await validateApiCoupon({ code: normalized, subtotal: payable, shippingFee: currentDelivery });
+
+      if (!validation.valid) {
+        setAppliedCoupon(null);
+        setCouponDiscount(0);
+        setFreeShipping(false);
+        setCouponError(validation.message);
+        return;
+      }
+
+      setAppliedCoupon(validation.code);
+      setCouponDiscount(validation.discount);
+      setFreeShipping(validation.freeShipping);
+      setCouponError(null);
+    } catch {
       setAppliedCoupon(null);
+      setCouponDiscount(0);
+      setFreeShipping(false);
       setCouponError("কুপনটি পাওয়া যায়নি");
+    }
+  };
+
+  const submitOrder = form.handleSubmit(async (values) => {
+    if (!tokens?.accessToken) {
+      setSubmitError("অর্ডার করতে আগে সাইন ইন করুন।");
       return;
     }
 
-    setAppliedCoupon(normalized);
-    setCouponError(null);
-  };
+    setSubmitError(null);
+    setIsSubmitting(true);
 
-  const submitOrder = form.handleSubmit(() => {
-    setOrderNumber(`BP-${Date.now().toString().slice(-8)}`);
-    clearCart();
+    try {
+      await syncCart();
+      const address = await createApiAddress(tokens.accessToken, {
+        label: values.addressPreset === "custom" ? "Checkout" : values.addressPreset,
+        recipientName: values.name,
+        phone: values.phone,
+        addressLine1: values.address,
+        addressLine2: null,
+        city: values.city,
+        zone: null,
+        postalCode: null,
+        latitude: null,
+        longitude: null,
+        isDefault: false,
+      });
+      const order = await createApiOrder(tokens.accessToken, {
+        addressId: address.id,
+        paymentProvider: values.paymentMethod === "cash_on_delivery" ? null : values.paymentMethod,
+      });
+
+      setOrderNumber(order.id.slice(0, 8).toUpperCase());
+      clearCart();
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : "অর্ডার সম্পন্ন করা যায়নি।");
+    } finally {
+      setIsSubmitting(false);
+    }
   });
 
   if (orderNumber) {
@@ -132,7 +186,7 @@ export function CheckoutPage() {
         <section className="max-w-lg rounded-lg border bg-card p-8 text-center">
           <CheckCircle2 className="mx-auto h-12 w-12 text-primary" aria-hidden="true" />
           <h1 className="mt-4 text-2xl font-semibold">অর্ডার কনফার্ম হয়েছে</h1>
-          <p className="mt-2 text-sm text-muted-foreground">আপনার অর্ডার নম্বর {orderNumber}। ডেমো অর্ডারটি লোকাল স্টেটে সম্পন্ন করা হয়েছে।</p>
+          <p className="mt-2 text-sm text-muted-foreground">আপনার অর্ডার নম্বর {orderNumber}। অর্ডারটি BookPie API-তে সংরক্ষণ করা হয়েছে।</p>
           <div className="mt-6 flex justify-center gap-3">
             <Button asChild>
               <Link href="/">আরও কেনাকাটা করুন</Link>
@@ -249,9 +303,18 @@ export function CheckoutPage() {
             {couponError ? <p className="mt-2 text-xs font-medium text-destructive">{couponError}</p> : null}
             {appliedCoupon ? <p className="mt-2 text-xs font-medium text-primary">{appliedCoupon} applied for 10% off.</p> : null}
           </section>
-          <Button type="submit" className="w-full sm:w-auto">
-            অর্ডার কনফার্ম করুন
-          </Button>
+          {submitError ? (
+            <p className="rounded-md bg-destructive/10 p-3 text-sm font-medium text-destructive">{submitError}</p>
+          ) : null}
+          {!tokens?.accessToken ? (
+            <Button asChild className="w-full sm:w-auto">
+              <Link href="/signin">সাইন ইন করে অর্ডার করুন</Link>
+            </Button>
+          ) : (
+            <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting}>
+              {isSubmitting ? "অর্ডার হচ্ছে..." : "অর্ডার কনফার্ম করুন"}
+            </Button>
+          )}
         </form>
         <aside className="h-fit rounded-lg border bg-card p-7">
           <h2 className="text-lg font-semibold">অর্ডার সামারি</h2>

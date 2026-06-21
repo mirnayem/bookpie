@@ -19,7 +19,10 @@ use super::{
 
 pub fn review_router() -> Router<AppState> {
     Router::new()
-        .route("/books/{book_id}/reviews", get(list_reviews).post(create_review))
+        .route(
+            "/books/{book_id}/reviews",
+            get(list_reviews).post(create_review),
+        )
         .route("/books/{book_id}/ratings", get(rating_summary))
         .route("/admin/reviews", get(admin_reviews))
         .route("/admin/reviews/{id}/moderation", patch(moderate_review))
@@ -38,7 +41,9 @@ async fn rating_summary(
     Path(book_id): Path<Uuid>,
 ) -> Result<Json<ApiResponse<ProductRatingSummary>>, ApiError> {
     let service = ReviewService::new(state.pg_pool.clone());
-    Ok(Json(ApiResponse::ok(service.rating_summary(book_id).await?)))
+    Ok(Json(ApiResponse::ok(
+        service.rating_summary(book_id).await?,
+    )))
 }
 
 async fn create_review(

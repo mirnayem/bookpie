@@ -3,12 +3,16 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use validator::Validate;
 
+use crate::middleware::auth::UserRole;
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CustomerProfile {
     pub user_id: Uuid,
     pub name: String,
     pub email: String,
+    pub role: UserRole,
+    pub is_active: bool,
     pub display_name: Option<String>,
     pub phone: Option<String>,
     pub date_of_birth: Option<NaiveDate>,
@@ -161,6 +165,8 @@ pub struct AdminCustomerSummary {
     pub id: Uuid,
     pub name: String,
     pub email: String,
+    pub role: UserRole,
+    pub is_active: bool,
     pub phone: Option<String>,
     pub address_count: i64,
 }

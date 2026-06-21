@@ -13,15 +13,17 @@ import { SiteHeader } from "@/components/layout/site-header";
 import {
   appPromo,
   authors,
-  circularCategories,
   heroBanners,
-  productSections,
   publishers,
   rankedLists,
   showcaseGroups,
 } from "@/data/storefront";
+import { buildProductSections, getStorefrontBooks, getStorefrontCategories } from "@/lib/storefront-api";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const [apiProducts, apiCategories] = await Promise.all([getStorefrontBooks(), getStorefrontCategories()]);
+  const productSections = buildProductSections(apiProducts);
+  const circularCategories = apiCategories.length ? apiCategories : [];
   const [newBooks, safeFood, trending, preOrder, islamic, seerah, history, family] = productSections;
   const recommended = {
     id: "recommended",
@@ -36,12 +38,17 @@ export default function HomePage() {
       <main>
         <h1 className="sr-only">BookPie online bookstore</h1>
         <HeroCarousel banners={heroBanners} />
-        <CategoryShowcaseGrid groups={showcaseGroups} />
+        <CategoryShowcaseGrid
+          groups={showcaseGroups.map((group, index) => ({
+            ...group,
+            items: apiProducts.slice(index, index + 4).length ? apiProducts.slice(index, index + 4) : group.items,
+          }))}
+        />
         <ProductRail section={newBooks} />
         <FlashSaleSection products={[...trending.products, ...preOrder.products]} />
         <ProductRail section={recommended} />
         <ProductRail section={safeFood} />
-        <CircularCategoryRail title="সেফ ফুড" href="/categories/safe-food" categories={circularCategories} />
+        {circularCategories.length ? <CircularCategoryRail title="ক্যাটাগরি" href="/categories" categories={circularCategories} /> : null}
         <ProductRail section={trending} />
         <ProductRail section={preOrder} />
         <section className="bg-muted py-10">

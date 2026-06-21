@@ -13,42 +13,56 @@ import { EntityForm } from "@/components/admin/entity-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
+import { adminApi } from "@/lib/admin/api";
 import { useDebounce } from "@/lib/use-debounce";
 import { useAuthStore } from "@/stores/auth-store";
 
 type CatalogEntity = Author | Publisher | Category | Brand;
+type CatalogEntityType = "authors" | "publishers" | "categories" | "brands";
 
-type CatalogEntityAdminPageProps<T extends CatalogEntity> = {
+type CatalogEntityAdminPageProps = {
   title: string;
   description: string;
-  queryKey: string;
-  load: (token: string | null) => Promise<T[]>;
-  create: (token: string | null, payload: UpsertAuthorRequest) => Promise<T>;
-  update: (token: string | null, id: string, payload: UpsertAuthorRequest) => Promise<T>;
-  remove: (token: string | null, id: string) => Promise<void>;
+  entityType: CatalogEntityType;
 };
 
-export function CatalogEntityAdminPage<T extends CatalogEntity>({ title, description, queryKey, load, create, update, remove }: CatalogEntityAdminPageProps<T>) {
+const entityApi = {
+  authors: { load: adminApi.authors, create: adminApi.createAuthor, update: adminApi.updateAuthor, remove: adminApi.deleteAuthor },
+  publishers: { load: adminApi.publishers, create: adminApi.createPublisher, update: adminApi.updatePublisher, remove: adminApi.deletePublisher },
+  categories: { load: adminApi.categories, create: adminApi.createCategory, update: adminApi.updateCategory, remove: adminApi.deleteCategory },
+  brands: { load: adminApi.brands, create: adminApi.createBrand, update: adminApi.updateBrand, remove: adminApi.deleteBrand },
+} satisfies Record<
+  CatalogEntityType,
+  {
+    load: (token: string | null) => Promise<CatalogEntity[]>;
+    create: (token: string | null, payload: UpsertAuthorRequest) => Promise<CatalogEntity>;
+    update: (token: string | null, id: string, payload: UpsertAuthorRequest) => Promise<CatalogEntity>;
+    remove: (token: string | null, id: string) => Promise<void>;
+  }
+>;
+
+export function CatalogEntityAdminPage({ title, description, entityType }: CatalogEntityAdminPageProps) {
+  const { load, create, update, remove } = entityApi[entityType];
   const token = useAuthStore((state) => state.tokens?.accessToken ?? null);
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search);
   const [formOpen, setFormOpen] = useState(false);
-  const [editingEntity, setEditingEntity] = useState<T | null>(null);
-  const [deleteEntity, setDeleteEntity] = useState<T | null>(null);
-  const listQuery = useQuery({ queryKey: ["admin", queryKey], queryFn: () => load(token), enabled: Boolean(token) });
+  const [editingEntity, setEditingEntity] = useState<CatalogEntity | null>(null);
+  const [deleteEntity, setDeleteEntity] = useState<CatalogEntity | null>(null);
+  const listQuery = useQuery({ queryKey: ["admin", entityType], queryFn: () => load(token), enabled: Boolean(token) });
   const saveMutation = useMutation({
     mutationFn: (payload: UpsertAuthorRequest) => (editingEntity ? update(token, editingEntity.id, payload) : create(token, payload)),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["admin", queryKey] });
+      await queryClient.invalidateQueries({ queryKey: ["admin", entityType] });
       setFormOpen(false);
       setEditingEntity(null);
     },
   });
   const deleteMutation = useMutation({
-    mutationFn: (entity: T) => remove(token, entity.id),
+    mutationFn: (entity: CatalogEntity) => remove(token, entity.id),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["admin", queryKey] });
+      await queryClient.invalidateQueries({ queryKey: ["admin", entityType] });
       setDeleteEntity(null);
     },
   });

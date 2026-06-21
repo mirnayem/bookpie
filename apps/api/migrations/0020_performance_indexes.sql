@@ -1,3 +1,7 @@
+ALTER TABLE books
+    ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT true,
+    ADD COLUMN IF NOT EXISTS category_id UUID REFERENCES categories(id) ON DELETE SET NULL;
+
 CREATE INDEX IF NOT EXISTS idx_books_slug_active ON books(slug) WHERE is_active = true;
 CREATE INDEX IF NOT EXISTS idx_books_category_id_active ON books(category_id) WHERE is_active = true;
 CREATE INDEX IF NOT EXISTS idx_books_author_id_active ON books(author_id) WHERE is_active = true;

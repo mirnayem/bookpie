@@ -1,9 +1,11 @@
 import { CollectionPage } from "@/components/catalog/collection-page";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
-import { products } from "@/data/storefront";
+import { getStorefrontBooks } from "@/lib/storefront-api";
 
-export default function BooksIndexRoute() {
+export default async function BooksIndexRoute() {
+  const products = await getStorefrontBooks();
+
   return (
     <>
       <SiteHeader />

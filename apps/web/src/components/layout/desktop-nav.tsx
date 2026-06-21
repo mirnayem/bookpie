@@ -3,15 +3,19 @@
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { navigationItems } from "@/components/layout/navigation";
+import { navigationItems, type NavigationItem } from "@/components/layout/navigation";
 import { cn } from "@/lib/utils";
 
-export function DesktopNav() {
+type DesktopNavProps = {
+  items?: NavigationItem[];
+};
+
+export function DesktopNav({ items = navigationItems }: DesktopNavProps) {
   const pathname = usePathname();
 
   return (
     <nav aria-label="Primary navigation" className="hidden items-center justify-center gap-7 text-sm font-medium lg:flex">
-      {navigationItems.map((item) => (
+      {items.map((item) => (
         <Link
           key={item.href}
           href={item.href}

@@ -7,9 +7,8 @@ import { useState } from "react";
 import { Logo } from "@/components/layout/logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { createDemoAuthResponse } from "@/lib/demo-auth";
+import { login } from "@/lib/api-client";
 import { useAuthStore } from "@/stores/auth-store";
-import { useCartStore } from "@/stores/cart-store";
 
 type LoginModalProps = {
   illustration: string;
@@ -18,13 +17,13 @@ type LoginModalProps = {
 export function LoginModal({ illustration }: LoginModalProps) {
   const [open, setOpen] = useState(false);
   const setAuth = useAuthStore((state) => state.setAuth);
-  const mergeGuestCartAfterLogin = useCartStore((state) => state.mergeGuestCartAfterLogin);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const submitEmailLogin = (event: FormEvent<HTMLFormElement>) => {
+  const submitEmailLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (!email.includes("@") || password.length < 6) {
@@ -32,11 +31,19 @@ export function LoginModal({ illustration }: LoginModalProps) {
       return;
     }
 
-    setAuth(createDemoAuthResponse(email));
-    mergeGuestCartAfterLogin();
-    setError(null);
-    setNotice(null);
-    setOpen(false);
+    setIsSubmitting(true);
+
+    try {
+      const response = await login({ email, password });
+      setAuth(response);
+      setError(null);
+      setNotice(null);
+      setOpen(false);
+    } catch (loginError) {
+      setError(loginError instanceof Error ? loginError.message : "লগইন করা যায়নি");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -78,8 +85,8 @@ export function LoginModal({ illustration }: LoginModalProps) {
                 <button type="button" className="ml-auto block text-xs text-muted-foreground hover:text-primary" onClick={() => setNotice("ডেমো reset link প্রস্তুত করা হয়েছে।")}>
                   Forgot password?
                 </button>
-                <Button type="submit" className="w-full">
-                  লগইন/রেজিস্টার
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? "লগইন হচ্ছে..." : "লগইন করুন"}
                 </Button>
               </form>
             </div>

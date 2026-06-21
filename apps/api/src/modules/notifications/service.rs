@@ -43,7 +43,9 @@ impl NotificationService {
                 payload.recipient.trim(),
                 payload.subject.as_deref(),
                 payload.body.trim(),
-                payload.metadata.unwrap_or_else(|| json!({ "mockReady": true })),
+                payload
+                    .metadata
+                    .unwrap_or_else(|| json!({ "mockReady": true })),
             )
             .await
     }
@@ -115,5 +117,7 @@ fn validate_channel(channel: &str) -> Result<(), ApiError> {
     if matches!(channel, "email" | "sms" | "push" | "whatsapp") {
         return Ok(());
     }
-    Err(ApiError::Validation("invalid notification channel".to_string()))
+    Err(ApiError::Validation(
+        "invalid notification channel".to_string(),
+    ))
 }

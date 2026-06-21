@@ -13,7 +13,11 @@ import { Input } from "@/components/ui/input";
 import { adminApi } from "@/lib/admin/api";
 import { useAuthStore } from "@/stores/auth-store";
 
-export function SettingsAdminPage() {
+type SettingsAdminPageProps = {
+  mode?: "settings" | "profile";
+};
+
+export function SettingsAdminPage({ mode = "settings" }: SettingsAdminPageProps) {
   const token = useAuthStore((state) => state.tokens?.accessToken ?? null);
   const queryClient = useQueryClient();
   const profileQuery = useQuery({ queryKey: ["admin", "profile"], queryFn: () => adminApi.profile(token), enabled: Boolean(token) });
@@ -31,7 +35,10 @@ export function SettingsAdminPage() {
 
   return (
     <div className="space-y-6">
-      <AdminPageHeader title="Settings" description="Manage admin profile and store configuration placeholders." />
+      <AdminPageHeader
+        title={mode === "profile" ? "Admin profile" : "Settings"}
+        description={mode === "profile" ? "Manage your admin contact profile." : "Manage admin profile and store configuration placeholders."}
+      />
       <section id="profile" className="rounded-lg border bg-card p-5">
         <h2 className="text-lg font-semibold">Admin profile</h2>
         <form className="mt-4 grid gap-4 md:grid-cols-2" onSubmit={form.handleSubmit((payload) => mutation.mutate(payload))}>
@@ -52,13 +59,15 @@ export function SettingsAdminPage() {
           </div>
         </form>
       </section>
-      <section className="grid gap-4 lg:grid-cols-3">
-        {["Password changes need a backend endpoint.", "Store contact settings need backend persistence.", "Payment and delivery defaults need backend settings APIs."].map((text) => (
-          <article key={text} className="rounded-lg border bg-card p-5 text-sm text-muted-foreground">
-            {text}
-          </article>
-        ))}
-      </section>
+      {mode === "settings" ? (
+        <section className="grid gap-4 lg:grid-cols-3">
+          {["Password changes need a backend endpoint.", "Store contact settings need backend persistence.", "Payment and delivery defaults need backend settings APIs."].map((text) => (
+            <article key={text} className="rounded-lg border bg-card p-5 text-sm text-muted-foreground">
+              {text}
+            </article>
+          ))}
+        </section>
+      ) : null}
     </div>
   );
 }

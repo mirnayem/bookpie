@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { userRoleSchema } from "./user";
+
 export const customerAddressSchema = z.object({
   id: z.string().uuid(),
   userId: z.string().uuid(),
@@ -20,6 +22,8 @@ export const customerProfileSchema = z.object({
   userId: z.string().uuid(),
   name: z.string(),
   email: z.string().email(),
+  role: userRoleSchema,
+  isActive: z.boolean(),
   displayName: z.string().nullable(),
   phone: z.string().nullable(),
   dateOfBirth: z.string().nullable(),
@@ -98,6 +102,8 @@ export const adminCustomerSummarySchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
   email: z.string().email(),
+  role: userRoleSchema,
+  isActive: z.boolean(),
   phone: z.string().nullable(),
   addressCount: z.number().int().nonnegative(),
 });

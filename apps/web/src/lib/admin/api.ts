@@ -1,6 +1,7 @@
 import type {
   AdminCustomerSummary,
   AdminDashboardSummary,
+  AdminUpdateUserRequest,
   BuyXGetYRule,
   CashbackRule,
   AssignDeliveryRequest,
@@ -41,6 +42,7 @@ import type {
   WarehouseReport,
   CohortReport,
   RetentionReport,
+  User,
 } from "@bookpie/shared";
 
 import { adminRequest } from "@/lib/api-client";
@@ -118,6 +120,7 @@ export const adminApi = {
   membershipPlans: (token: string | null) => adminRequest<MembershipPlan[]>(token, "/admin/promotions/memberships"),
   customers: (token: string | null, params?: ListParams) => adminRequest<AdminCustomerSummary[]>(token, `/admin/customers${queryString(params)}`),
   customer: (token: string | null, id: string) => adminRequest<CustomerProfile>(token, `/admin/customers/${id}`),
+  updateUser: (token: string | null, id: string, payload: AdminUpdateUserRequest) => adminRequest<User>(token, `/auth/admin/users/${id}`, { method: "PATCH", body: payload }),
   profile: (token: string | null) => adminRequest<CustomerProfile>(token, "/profile"),
   updateProfile: (token: string | null, payload: UpdateProfileRequest) => adminRequest<CustomerProfile>(token, "/profile", { method: "PATCH", body: payload }),
   createAddress: (token: string | null, payload: UpsertAddressRequest) => adminRequest(token, "/profile/addresses", { method: "POST", body: payload }),

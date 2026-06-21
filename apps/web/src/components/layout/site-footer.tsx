@@ -2,6 +2,7 @@ import { Mail, MapPin, Phone } from "lucide-react";
 import { FooterLinkGroup } from "@/components/layout/footer-link-group";
 import { Logo } from "@/components/layout/logo";
 import { NewsletterForm } from "@/components/layout/newsletter-form";
+import { getStorefrontCategories } from "@/lib/storefront-api";
 
 const importantLinks = [
   { label: "যোগাযোগ করুন", href: "/contact" },
@@ -16,10 +17,13 @@ const popularLinks = [
   { label: "জনপ্রিয় প্রকাশক", href: "/publishers" },
 ];
 
-export function SiteFooter() {
+export async function SiteFooter() {
+  const categories = await getStorefrontCategories();
+  const categoryLinks = categories.slice(0, 4).map((category) => ({ label: category.title, href: category.href }));
+
   return (
     <footer className="border-t bg-background">
-      <div className="container-page grid gap-8 py-10 md:grid-cols-2 lg:grid-cols-5">
+      <div className="container-page grid gap-8 py-10 md:grid-cols-2 lg:grid-cols-6">
         <div className="lg:col-span-2">
           <Logo />
           <p className="mt-4 max-w-sm text-sm leading-7 text-muted-foreground">
@@ -29,6 +33,7 @@ export function SiteFooter() {
         </div>
         <FooterLinkGroup title="প্রয়োজনীয় লিংক" links={importantLinks} />
         <FooterLinkGroup title="জনপ্রিয়" links={popularLinks} />
+        <FooterLinkGroup title="বিভাগ" links={categoryLinks.length > 0 ? categoryLinks : popularLinks.slice(0, 4)} />
         <div>
           <h2 className="text-sm font-semibold">Subscribe Now</h2>
           <p className="mt-3 text-sm leading-6 text-muted-foreground">Subscribe for newsletter and featured book updates.</p>

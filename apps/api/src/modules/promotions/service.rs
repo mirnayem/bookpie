@@ -70,7 +70,11 @@ impl PromotionService {
         payload
             .validate()
             .map_err(|error| ApiError::Validation(error.to_string()))?;
-        if payload.starts_at.zip(payload.ends_at).is_some_and(|(s, e)| e <= s) {
+        if payload
+            .starts_at
+            .zip(payload.ends_at)
+            .is_some_and(|(s, e)| e <= s)
+        {
             return Err(ApiError::Validation(
                 "endsAt must be after startsAt".to_string(),
             ));
@@ -109,7 +113,9 @@ impl PromotionService {
         payload
             .validate()
             .map_err(|error| ApiError::Validation(error.to_string()))?;
-        self.repository.create_referral(user_id, &payload.code).await
+        self.repository
+            .create_referral(user_id, &payload.code)
+            .await
     }
 
     pub async fn loyalty_account(&self, user_id: UserId) -> Result<LoyaltyAccount, ApiError> {
@@ -144,7 +150,11 @@ impl PromotionService {
         payload
             .validate()
             .map_err(|error| ApiError::Validation(error.to_string()))?;
-        if payload.starts_at.zip(payload.ends_at).is_some_and(|(s, e)| e <= s) {
+        if payload
+            .starts_at
+            .zip(payload.ends_at)
+            .is_some_and(|(s, e)| e <= s)
+        {
             return Err(ApiError::Validation(
                 "endsAt must be after startsAt".to_string(),
             ));
@@ -182,7 +192,11 @@ fn validate_coupon_payload(payload: &UpsertCouponRequest) -> Result<(), ApiError
             "percent coupon cannot exceed 100".to_string(),
         ));
     }
-    if payload.starts_at.zip(payload.ends_at).is_some_and(|(s, e)| e <= s) {
+    if payload
+        .starts_at
+        .zip(payload.ends_at)
+        .is_some_and(|(s, e)| e <= s)
+    {
         return Err(ApiError::Validation(
             "endsAt must be after startsAt".to_string(),
         ));

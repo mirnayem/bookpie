@@ -1,5 +1,5 @@
-use sqlx::{PgPool, Row, postgres::PgRow};
 use crate::{error::ApiError, models::ids::UserId};
+use sqlx::{PgPool, Row, postgres::PgRow};
 
 use super::model::NotificationEvent;
 
@@ -77,7 +77,6 @@ impl NotificationRepository {
         .await?;
         Ok(())
     }
-
 }
 
 fn event_from_row(row: PgRow) -> NotificationEvent {

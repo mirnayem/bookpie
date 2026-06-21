@@ -32,10 +32,7 @@ impl ReviewService {
         self.repository.rating_summary(book_id).await
     }
 
-    pub async fn admin_list(
-        &self,
-        query: ReviewListQuery,
-    ) -> Result<Vec<ProductReview>, ApiError> {
+    pub async fn admin_list(&self, query: ReviewListQuery) -> Result<Vec<ProductReview>, ApiError> {
         let status = query
             .status
             .as_deref()
@@ -74,6 +71,8 @@ impl ReviewService {
         if !matches!(payload.status.as_str(), "pending" | "approved" | "rejected") {
             return Err(ApiError::Validation("invalid review status".to_string()));
         }
-        self.repository.moderate(id, &payload.status, moderator).await
+        self.repository
+            .moderate(id, &payload.status, moderator)
+            .await
     }
 }

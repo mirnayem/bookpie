@@ -24,12 +24,14 @@ pub struct LoginRequest {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[serde(rename_all = "camelCase")]
 pub struct RefreshTokenRequest {
     #[validate(length(min = 16))]
     pub refresh_token: String,
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[serde(rename_all = "camelCase")]
 pub struct LogoutRequest {
     #[validate(length(min = 16))]
     pub refresh_token: String,

@@ -47,13 +47,13 @@ impl ApiError {
             Self::NotFound => StatusCode::NOT_FOUND,
             Self::Conflict(_) => StatusCode::CONFLICT,
             Self::Validation(_) => StatusCode::UNPROCESSABLE_ENTITY,
+            Self::Jwt(_) => StatusCode::UNAUTHORIZED,
             Self::Search(_) => StatusCode::BAD_GATEWAY,
             Self::RateLimited => StatusCode::TOO_MANY_REQUESTS,
             Self::Config(_)
             | Self::Sqlx(_)
             | Self::Redis(_)
             | Self::Http(_)
-            | Self::Jwt(_)
             | Self::Io(_)
             | Self::AddrParse(_)
             | Self::ParseInt(_) => StatusCode::INTERNAL_SERVER_ERROR,
@@ -73,7 +73,7 @@ impl ApiError {
             Self::Sqlx(_) => "DATABASE_ERROR",
             Self::Redis(_) => "REDIS_ERROR",
             Self::Http(_) => "HTTP_ERROR",
-            Self::Jwt(_) => "TOKEN_ERROR",
+            Self::Jwt(_) => "UNAUTHORIZED",
             Self::Io(_) => "IO_ERROR",
             Self::AddrParse(_) | Self::ParseInt(_) => "PARSE_ERROR",
         }

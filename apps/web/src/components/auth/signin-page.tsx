@@ -5,9 +5,8 @@ import { LoginModal } from "@/components/auth/login-modal";
 import { Logo } from "@/components/layout/logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { createDemoAuthResponse } from "@/lib/demo-auth";
+import { login } from "@/lib/api-client";
 import { useAuthStore } from "@/stores/auth-store";
-import { useCartStore } from "@/stores/cart-store";
 import type { FormEvent } from "react";
 import { useState } from "react";
 
@@ -19,25 +18,34 @@ export function SigninPage({ illustration }: SigninPageProps) {
   const setAuth = useAuthStore((state) => state.setAuth);
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
-  const mergeGuestCartAfterLogin = useCartStore((state) => state.mergeGuestCartAfterLogin);
-  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("customer@bookpie.local");
+  const [password, setPassword] = useState("password123");
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const submitPhoneLogin = (event: FormEvent<HTMLFormElement>) => {
+  const submitLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const normalizedPhone = phone.trim();
 
-    if (!/^01[3-9]\d{8}$/.test(normalizedPhone)) {
-      setError("সঠিক মোবাইল নম্বর লিখুন");
+    if (!email.includes("@") || password.length < 6) {
+      setError("সঠিক ইমেইল এবং পাসওয়ার্ড লিখুন");
       setMessage(null);
       return;
     }
 
-    setAuth(createDemoAuthResponse(normalizedPhone));
-    mergeGuestCartAfterLogin();
-    setError(null);
-    setMessage("ডেমো একাউন্টে লগইন সম্পন্ন হয়েছে।");
+    setIsSubmitting(true);
+
+    try {
+      const response = await login({ email, password });
+      setAuth(response);
+      setError(null);
+      setMessage("লগইন সম্পন্ন হয়েছে।");
+    } catch (loginError) {
+      setError(loginError instanceof Error ? loginError.message : "লগইন করা যায়নি");
+      setMessage(null);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -57,13 +65,14 @@ export function SigninPage({ illustration }: SigninPageProps) {
             </Button>
           </div>
         ) : null}
-        <p className="mt-6 text-sm font-semibold">মোবাইল নাম্বার দিয়ে লগইন করুন</p>
-        <form className="mt-4 space-y-4" onSubmit={submitPhoneLogin}>
-          <Input value={phone} placeholder="01324299XXX" aria-label="Mobile number" onChange={(event) => setPhone(event.target.value)} />
+        <p className="mt-6 text-sm font-semibold">ইমেইল দিয়ে লগইন করুন</p>
+        <form className="mt-4 space-y-4" onSubmit={submitLogin}>
+          <Input type="email" value={email} placeholder="customer@bookpie.local" aria-label="Email" onChange={(event) => setEmail(event.target.value)} />
+          <Input type="password" value={password} placeholder="password123" aria-label="Password" onChange={(event) => setPassword(event.target.value)} />
           {error ? <p className="text-xs font-medium text-destructive">{error}</p> : null}
           {message ? <p className="text-xs font-medium text-primary">{message}</p> : null}
-          <Button type="submit" className="w-full">
-            লগইন/রেজিস্টার
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? "লগইন হচ্ছে..." : "লগইন করুন"}
           </Button>
         </form>
         <div className="mt-5 grid gap-3">
@@ -71,14 +80,23 @@ export function SigninPage({ illustration }: SigninPageProps) {
           <Button
             type="button"
             variant="outline"
-            onClick={() => {
-              setAuth(createDemoAuthResponse("google-customer@bookpie.local"));
-              mergeGuestCartAfterLogin();
-              setMessage("Google demo login সম্পন্ন হয়েছে।");
-              setError(null);
+            onClick={async () => {
+              setIsSubmitting(true);
+              try {
+                const response = await login({ email: "customer@bookpie.local", password: "password123" });
+                setAuth(response);
+                setMessage("Seeded customer login সম্পন্ন হয়েছে।");
+                setError(null);
+              } catch (loginError) {
+                setError(loginError instanceof Error ? loginError.message : "লগইন করা যায়নি");
+                setMessage(null);
+              } finally {
+                setIsSubmitting(false);
+              }
             }}
+            disabled={isSubmitting}
           >
-            গুগল দিয়ে লগইন করুন
+            seeded customer দিয়ে লগইন করুন
           </Button>
         </div>
       </section>

@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { SummaryLine } from "@/components/cart/summary-line";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatTaka } from "@/lib/format";
+import { validateApiCoupon } from "@/lib/storefront-api";
 
 type CartSummaryProps = {
   subtotal: number;
@@ -14,33 +15,47 @@ type CartSummaryProps = {
   disabled?: boolean;
 };
 
-const validCoupons = new Set(["BOOKPIE10", "SAVE10"]);
-
 export function CartSummary({ subtotal, discount, delivery, disabled = false }: CartSummaryProps) {
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
   const [couponError, setCouponError] = useState<string | null>(null);
-  const couponDiscount = useMemo(() => (appliedCoupon ? Math.round(Math.max(subtotal - discount, 0) * 0.1) : 0), [appliedCoupon, discount, subtotal]);
-  const total = Math.max(subtotal - discount - couponDiscount, 0) + (disabled ? 0 : delivery);
+  const [couponDiscount, setCouponDiscount] = useState(0);
+  const [freeShipping, setFreeShipping] = useState(false);
+  const deliveryFee = disabled || freeShipping ? 0 : delivery;
+  const total = Math.max(subtotal - discount - couponDiscount, 0) + deliveryFee;
 
-  const applyCoupon = (event: React.FormEvent<HTMLFormElement>) => {
+  const applyCoupon = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const normalized = couponCode.trim().toUpperCase();
 
     if (!normalized) {
       setAppliedCoupon(null);
+      setCouponDiscount(0);
+      setFreeShipping(false);
       setCouponError("কুপন কোড লিখুন");
       return;
     }
 
-    if (!validCoupons.has(normalized)) {
-      setAppliedCoupon(null);
-      setCouponError("কুপনটি পাওয়া যায়নি");
-      return;
-    }
+    try {
+      const validation = await validateApiCoupon({ code: normalized, subtotal: Math.max(subtotal - discount, 0), shippingFee: delivery });
+      if (!validation.valid) {
+        setAppliedCoupon(null);
+        setCouponDiscount(0);
+        setFreeShipping(false);
+        setCouponError(validation.message);
+        return;
+      }
 
-    setAppliedCoupon(normalized);
-    setCouponError(null);
+      setAppliedCoupon(validation.code);
+      setCouponDiscount(validation.discount);
+      setFreeShipping(validation.freeShipping);
+      setCouponError(null);
+    } catch {
+      setAppliedCoupon(null);
+      setCouponDiscount(0);
+      setFreeShipping(false);
+      setCouponError("কুপনটি পাওয়া যায়নি");
+    }
   };
 
   return (
@@ -50,7 +65,7 @@ export function CartSummary({ subtotal, discount, delivery, disabled = false }: 
         <SummaryLine label="ছাড়" value={`-${formatTaka(discount)}`} />
         {couponDiscount ? <SummaryLine label={`কুপন (${appliedCoupon})`} value={`-${formatTaka(couponDiscount)}`} /> : null}
         <SummaryLine label="মোট দাম" value={formatTaka(subtotal - discount)} />
-        <SummaryLine label="ডেলিভারি ফি" value={formatTaka(disabled ? 0 : delivery)} />
+        <SummaryLine label="ডেলিভারি ফি" value={formatTaka(deliveryFee)} />
         <SummaryLine label="সর্বমোট" value={formatTaka(total)} strong />
       </div>
       <form className="mt-7 flex gap-2" onSubmit={applyCoupon}>

@@ -3,10 +3,14 @@ export type Product = {
   slug: string;
   title: string;
   author?: string;
+  publisher?: string;
+  description?: string | null;
   image: string;
   price: number;
   originalPrice?: number;
   discountPercent?: number;
+  stock?: number;
+  categoryNames?: string[];
   categoryIds: string[];
 };
 

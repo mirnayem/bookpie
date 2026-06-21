@@ -26,7 +26,10 @@ pub fn promotion_router() -> Router<AppState> {
         .route("/promotions/referrals", post(create_referral))
         .route("/promotions/loyalty/me", get(loyalty_account))
         .route("/promotions/memberships", get(membership_plans))
-        .route("/admin/promotions/coupons", get(coupons).post(create_coupon))
+        .route(
+            "/admin/promotions/coupons",
+            get(coupons).post(create_coupon),
+        )
         .route("/admin/promotions/coupons/{id}", patch(update_coupon))
         .route(
             "/admin/promotions/buy-x-get-y",
@@ -36,10 +39,7 @@ pub fn promotion_router() -> Router<AppState> {
             "/admin/promotions/flash-sales",
             get(flash_sales).post(create_flash_sale),
         )
-        .route(
-            "/admin/promotions/loyalty/adjust",
-            post(adjust_loyalty),
-        )
+        .route("/admin/promotions/loyalty/adjust", post(adjust_loyalty))
         .route(
             "/admin/promotions/cashback-rules",
             get(cashback_rules).post(create_cashback_rule),
@@ -55,7 +55,9 @@ async fn validate_coupon(
     Json(payload): Json<ValidateCouponRequest>,
 ) -> Result<Json<ApiResponse<CouponValidation>>, ApiError> {
     let service = PromotionService::new(state.pg_pool.clone());
-    Ok(Json(ApiResponse::ok(service.validate_coupon(payload).await?)))
+    Ok(Json(ApiResponse::ok(
+        service.validate_coupon(payload).await?,
+    )))
 }
 
 async fn referral_summary(
@@ -63,7 +65,9 @@ async fn referral_summary(
     user: CurrentUser,
 ) -> Result<Json<ApiResponse<ReferralSummary>>, ApiError> {
     let service = PromotionService::new(state.pg_pool.clone());
-    Ok(Json(ApiResponse::ok(service.referral_summary(user.id).await?)))
+    Ok(Json(ApiResponse::ok(
+        service.referral_summary(user.id).await?,
+    )))
 }
 
 async fn create_referral(
@@ -82,7 +86,9 @@ async fn loyalty_account(
     user: CurrentUser,
 ) -> Result<Json<ApiResponse<LoyaltyAccount>>, ApiError> {
     let service = PromotionService::new(state.pg_pool.clone());
-    Ok(Json(ApiResponse::ok(service.loyalty_account(user.id).await?)))
+    Ok(Json(ApiResponse::ok(
+        service.loyalty_account(user.id).await?,
+    )))
 }
 
 async fn coupons(
@@ -166,7 +172,9 @@ async fn adjust_loyalty(
 ) -> Result<Json<ApiResponse<LoyaltyAccount>>, ApiError> {
     user.require_admin()?;
     let service = PromotionService::new(state.pg_pool.clone());
-    Ok(Json(ApiResponse::ok(service.adjust_loyalty(payload).await?)))
+    Ok(Json(ApiResponse::ok(
+        service.adjust_loyalty(payload).await?,
+    )))
 }
 
 async fn cashback_rules(

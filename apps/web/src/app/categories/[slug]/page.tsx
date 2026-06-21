@@ -1,6 +1,7 @@
 import { ListingPage } from "@/components/catalog/listing-page";
 import { SiteHeader } from "@/components/layout/site-header";
-import { circularCategories, products, subjectCategories } from "@/data/storefront";
+import { circularCategories, subjectCategories } from "@/data/storefront";
+import { getStorefrontBooks, getStorefrontCategories } from "@/lib/storefront-api";
 import type { ListingPage as ListingPageType } from "@/types/storefront";
 
 type CategoryRouteProps = {
@@ -22,18 +23,22 @@ function titleFromSlug(slug: string) {
 
 export default async function CategoryRoute({ params }: CategoryRouteProps) {
   const { slug } = await params;
-  const title = titleFromSlug(slug);
+  const [products, apiCategories] = await Promise.all([getStorefrontBooks(), getStorefrontCategories()]);
+  const title = apiCategories.find((category) => category.href.endsWith(`/${slug}`))?.title ?? titleFromSlug(slug);
+  const categoryProducts = products.filter((product) =>
+    product.categoryNames?.some((name) => name.toLowerCase().includes(title.toLowerCase()) || title.toLowerCase().includes(name.toLowerCase())),
+  );
   const page: ListingPageType = {
     id: `category-${slug}`,
     title,
     activeNav: "/categories",
-    tags: circularCategories.map((category) => category.title),
+    tags: (apiCategories.length ? apiCategories : circularCategories).map((category) => category.title),
     filters: [
       { title: "প্রকাশক", options: ["সমকালীন প্রকাশন", "রুহামা পাবলিকেশন", "গার্ডিয়ান পাবলিকেশন"] },
       { title: "মূল্য", options: ["৳০ - ৳৩০০", "৳৩০১ - ৳৬০০", "৳৬০০+"] },
       { title: "স্টক", options: ["In stock", "Low stock", "Discounted"] },
     ],
-    products: [...products.slice(0, 12), ...products.slice(4, 16)],
+    products: categoryProducts.length ? categoryProducts : products,
   };
 
   return (

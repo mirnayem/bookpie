@@ -13,7 +13,9 @@ pub async fn get_json<T: DeserializeOwned>(
     let mut connection = client.get_multiplexed_async_connection().await?;
     let value: Option<String> = connection.get(key).await?;
     value
-        .map(|json| serde_json::from_str(&json).map_err(|error| ApiError::Config(error.to_string())))
+        .map(|json| {
+            serde_json::from_str(&json).map_err(|error| ApiError::Config(error.to_string()))
+        })
         .transpose()
 }
 

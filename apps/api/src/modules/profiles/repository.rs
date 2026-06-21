@@ -1,7 +1,7 @@
 use sqlx::{PgPool, Row, postgres::PgRow};
 use uuid::Uuid;
 
-use crate::{error::ApiError, models::ids::UserId};
+use crate::{error::ApiError, middleware::auth::UserRole, models::ids::UserId};
 
 use super::model::{
     AdminCustomerSummary, CreateSavedCardRequest, CreateSavedPaymentMethodRequest, CustomerAddress,
@@ -341,13 +341,13 @@ impl ProfileRepository {
         let rows = if let Some(search) = search {
             sqlx::query(
                 r#"
-            SELECT u.id, u.name, u.email, cp.phone, COUNT(ca.id)::BIGINT AS address_count
+            SELECT u.id, u.name, u.email, u.role, u.is_active, cp.phone, COUNT(ca.id)::BIGINT AS address_count
             FROM users u
             LEFT JOIN customer_profiles cp ON cp.user_id = u.id
             LEFT JOIN customer_addresses ca ON ca.user_id = u.id
             WHERE u.role = 'customer'
               AND (u.name ILIKE $1 OR u.email ILIKE $1 OR cp.phone ILIKE $1)
-            GROUP BY u.id, cp.phone
+            GROUP BY u.id, u.role, u.is_active, cp.phone
             ORDER BY u.created_at DESC
             LIMIT $2 OFFSET $3
             "#,
@@ -360,12 +360,12 @@ impl ProfileRepository {
         } else {
             sqlx::query(
                 r#"
-            SELECT u.id, u.name, u.email, cp.phone, COUNT(ca.id)::BIGINT AS address_count
+            SELECT u.id, u.name, u.email, u.role, u.is_active, cp.phone, COUNT(ca.id)::BIGINT AS address_count
             FROM users u
             LEFT JOIN customer_profiles cp ON cp.user_id = u.id
             LEFT JOIN customer_addresses ca ON ca.user_id = u.id
             WHERE u.role = 'customer'
-            GROUP BY u.id, cp.phone
+            GROUP BY u.id, u.role, u.is_active, cp.phone
             ORDER BY u.created_at DESC
             LIMIT $1 OFFSET $2
             "#,
@@ -433,6 +433,8 @@ fn profile_from_row(row: PgRow, addresses: Vec<CustomerAddress>) -> CustomerProf
         user_id: row.get("user_id"),
         name: row.get("name"),
         email: row.get("email"),
+        role: parse_role(row.get::<String, _>("role").as_str()),
+        is_active: row.get("is_active"),
         display_name: row.get("display_name"),
         phone: row.get("phone"),
         date_of_birth: row.get("date_of_birth"),
@@ -490,13 +492,25 @@ fn customer_summary_from_row(row: PgRow) -> AdminCustomerSummary {
         id: row.get("id"),
         name: row.get("name"),
         email: row.get("email"),
+        role: parse_role(row.get::<String, _>("role").as_str()),
+        is_active: row.get("is_active"),
         phone: row.get("phone"),
         address_count: row.get("address_count"),
     }
 }
 
+fn parse_role(role: &str) -> UserRole {
+    match role {
+        "warehouse_manager" => UserRole::WarehouseManager,
+        "delivery_agent" => UserRole::DeliveryAgent,
+        "admin" => UserRole::Admin,
+        "super_admin" => UserRole::SuperAdmin,
+        _ => UserRole::Customer,
+    }
+}
+
 const PROFILE_SELECT: &str = r#"
-    SELECT u.id AS user_id, u.name, u.email, cp.display_name, cp.phone, cp.date_of_birth
+    SELECT u.id AS user_id, u.name, u.email, u.role, u.is_active, cp.display_name, cp.phone, cp.date_of_birth
     FROM users u
     LEFT JOIN customer_profiles cp ON cp.user_id = u.id
     WHERE u.id = $1

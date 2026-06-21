@@ -3,9 +3,14 @@ import { DesktopNav } from "@/components/layout/desktop-nav";
 import { HeaderActions } from "@/components/layout/header-actions";
 import { Logo } from "@/components/layout/logo";
 import { MobileNav } from "@/components/layout/mobile-nav";
+import { buildNavigationItems } from "@/components/layout/navigation";
 import { SearchBar } from "@/components/layout/search-bar";
+import { getStorefrontCategories } from "@/lib/storefront-api";
 
-export function SiteHeader() {
+export async function SiteHeader() {
+  const categories = await getStorefrontCategories();
+  const navigationItems = buildNavigationItems(categories);
+
   return (
     <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur">
       <div className="hidden border-b bg-muted/60 py-2 text-center text-sm text-muted-foreground md:block">
@@ -15,7 +20,7 @@ export function SiteHeader() {
         </Link>
       </div>
       <div className="container-page flex min-h-20 items-center gap-4">
-        <MobileNav />
+        <MobileNav items={navigationItems} />
         <div className="shrink-0">
           <Logo />
         </div>
@@ -26,7 +31,7 @@ export function SiteHeader() {
         <SearchBar />
       </div>
       <div className="container-page hidden pb-4 lg:block">
-        <DesktopNav />
+        <DesktopNav items={navigationItems} />
       </div>
     </header>
   );

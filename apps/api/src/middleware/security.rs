@@ -29,7 +29,15 @@ pub async fn security_middleware(
     add_security_headers(response.headers_mut());
 
     if is_mutating_method(&method) && path.starts_with("/api/v1/admin") {
-        audit_admin_action(&state, &method, &path, response.status(), ip_address, user_agent).await;
+        audit_admin_action(
+            &state,
+            &method,
+            &path,
+            response.status(),
+            ip_address,
+            user_agent,
+        )
+        .await;
     }
 
     Ok(response)
@@ -87,9 +95,15 @@ async fn enforce_rate_limit(state: &AppState, headers: &HeaderMap) -> Result<(),
 }
 
 fn add_security_headers(headers: &mut HeaderMap) {
-    headers.insert("x-content-type-options", HeaderValue::from_static("nosniff"));
+    headers.insert(
+        "x-content-type-options",
+        HeaderValue::from_static("nosniff"),
+    );
     headers.insert("x-frame-options", HeaderValue::from_static("DENY"));
-    headers.insert("referrer-policy", HeaderValue::from_static("strict-origin-when-cross-origin"));
+    headers.insert(
+        "referrer-policy",
+        HeaderValue::from_static("strict-origin-when-cross-origin"),
+    );
     headers.insert(
         "content-security-policy",
         HeaderValue::from_static("default-src 'self'; frame-ancestors 'none'"),
@@ -123,7 +137,10 @@ async fn audit_admin_action(
 }
 
 fn is_mutating_method(method: &Method) -> bool {
-    matches!(*method, Method::POST | Method::PUT | Method::PATCH | Method::DELETE)
+    matches!(
+        *method,
+        Method::POST | Method::PUT | Method::PATCH | Method::DELETE
+    )
 }
 
 fn header_text(headers: &HeaderMap, name: &str) -> Option<String> {

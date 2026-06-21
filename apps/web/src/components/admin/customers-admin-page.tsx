@@ -8,6 +8,7 @@ import { useMemo, useState } from "react";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminState } from "@/components/admin/admin-state";
 import { AdminTable } from "@/components/admin/admin-table";
+import { AdminBadge } from "@/components/admin/admin-badge";
 import { CustomerProfileDetail } from "@/components/admin/customer-profile-detail";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,6 +56,8 @@ export function CustomersAdminPage() {
           columns={[
             { key: "name", header: "Name", render: (customer) => <span className="font-semibold">{customer.name}</span> },
             { key: "email", header: "Email", render: (customer) => customer.email },
+            { key: "role", header: "Role", render: (customer) => <AdminBadge>{customer.role.replaceAll("_", " ")}</AdminBadge> },
+            { key: "status", header: "Status", render: (customer) => <AdminBadge tone={customer.isActive ? "success" : "danger"}>{customer.isActive ? "Active" : "Blocked"}</AdminBadge> },
             { key: "phone", header: "Phone", render: (customer) => customer.phone ?? <span className="text-muted-foreground">Not set</span> },
             { key: "addresses", header: "Addresses", render: (customer) => customer.addressCount },
             {
@@ -74,7 +77,17 @@ export function CustomersAdminPage() {
         <AdminState title="No customers found" description="Customer accounts will appear after registration." />
       )}
       <Modal open={Boolean(selectedCustomer)} title={selectedCustomer?.name ?? "Customer"} onOpenChange={(open) => !open && setSelectedCustomer(null)} className="max-w-3xl">
-        {customerDetailQuery.data ? <CustomerProfileDetail profile={customerDetailQuery.data} /> : <p className="text-sm text-muted-foreground">Loading customer profile...</p>}
+        {customerDetailQuery.data ? (
+          <CustomerProfileDetail
+            profile={customerDetailQuery.data}
+            onSaved={async () => {
+              await customersQuery.refetch();
+              await customerDetailQuery.refetch();
+            }}
+          />
+        ) : (
+          <p className="text-sm text-muted-foreground">Loading customer profile...</p>
+        )}
       </Modal>
     </div>
   );

@@ -36,23 +36,23 @@ export function ProductDetailPage({ product, suggestions, promos }: ProductDetai
           <dl className="mt-5 space-y-2 text-sm leading-6">
             <div>
               <dt className="inline text-muted-foreground">লেখক : </dt>
-              <dd className="inline font-semibold text-primary">{product.author}</dd>
+              <dd className="inline font-semibold text-primary">{product.author ?? "BookPie"}</dd>
             </div>
             <div>
               <dt className="inline text-muted-foreground">প্রকাশনী : </dt>
-              <dd className="inline font-semibold text-primary">ইলম হাউজ পাবলিকেশন</dd>
+              <dd className="inline font-semibold text-primary">{product.publisher ?? "BookPie"}</dd>
             </div>
             <div>
               <dt className="inline text-muted-foreground">বিষয় : </dt>
-              <dd className="inline font-semibold text-primary">ইসলামী অর্থব্যবস্থা, শাসনব্যবস্থা ও রাজনীতি</dd>
+              <dd className="inline font-semibold text-primary">{product.categoryNames?.join(", ") || "বই"}</dd>
             </div>
             <div>
-              <dt className="inline text-muted-foreground">পৃষ্ঠা : </dt>
-              <dd className="inline">৪৪০, কাভার : হার্ড কাভার, সংস্করণ : 1st published, 2026</dd>
+              <dt className="inline text-muted-foreground">স্টক : </dt>
+              <dd className="inline">{product.stock && product.stock > 0 ? `${product.stock} কপি আছে` : "স্টক শেষ"}</dd>
             </div>
           </dl>
           <p className="mt-5 max-w-2xl text-sm leading-7 text-muted-foreground">
-            আমরা এক অদ্ভুত সময়ে বাস করছি। চেনা পৃথিবী বদলে যাচ্ছে, আর অনিশ্চিত নতুন পৃথিবীর জন্মযন্ত্রণা ফুটে উঠছে। এই বইটি বর্তমান বিশ্বকে বুঝতে পাঠককে সহায়তা করবে।
+            {product.description ?? "BookPie-র নির্বাচিত বই ও পণ্যের বিস্তারিত তথ্য। অর্ডার করলে দ্রুত ডেলিভারি প্রসেস শুরু হবে।"}
           </p>
           <p className="mt-5 text-2xl font-bold text-primary">{formatTaka(product.price)}</p>
           <div className="mt-6">

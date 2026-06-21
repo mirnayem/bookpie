@@ -1,18 +1,25 @@
 import type { CustomerProfile } from "@bookpie/shared";
 
+import { AdminBadge } from "@/components/admin/admin-badge";
+import { CustomerAccountActions } from "@/components/admin/customer-account-actions";
+
 type CustomerProfileDetailProps = {
   profile: CustomerProfile;
+  onSaved: () => Promise<void> | void;
 };
 
-export function CustomerProfileDetail({ profile }: CustomerProfileDetailProps) {
+export function CustomerProfileDetail({ profile, onSaved }: CustomerProfileDetailProps) {
   return (
     <div className="space-y-5">
       <div className="grid gap-3 rounded-lg border p-4 text-sm md:grid-cols-2">
         <p><span className="text-muted-foreground">Name:</span> {profile.name}</p>
         <p><span className="text-muted-foreground">Email:</span> {profile.email}</p>
+        <p><span className="text-muted-foreground">Role:</span> <AdminBadge>{profile.role.replaceAll("_", " ")}</AdminBadge></p>
+        <p><span className="text-muted-foreground">Status:</span> <AdminBadge tone={profile.isActive ? "success" : "danger"}>{profile.isActive ? "Active" : "Blocked"}</AdminBadge></p>
         <p><span className="text-muted-foreground">Display:</span> {profile.displayName ?? "Not set"}</p>
         <p><span className="text-muted-foreground">Phone:</span> {profile.phone ?? "Not set"}</p>
       </div>
+      <CustomerAccountActions profile={profile} onSaved={onSaved} />
       <div>
         <h3 className="mb-3 font-semibold">Addresses</h3>
         <div className="space-y-3">
@@ -26,7 +33,6 @@ export function CustomerProfileDetail({ profile }: CustomerProfileDetailProps) {
           {!profile.addresses.length ? <p className="text-sm text-muted-foreground">No addresses saved.</p> : null}
         </div>
       </div>
-      <p className="rounded-md bg-muted p-3 text-sm text-muted-foreground">Role updates, account blocking, and customer-specific order history links require backend endpoints and are tracked as admin API gaps.</p>
     </div>
   );
 }
