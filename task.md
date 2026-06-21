@@ -294,47 +294,47 @@ Goal: Build a backend-connected admin dashboard for managing BookPie bookstore o
 * [x] Hero banners
 * [x] Featured products
 * [x] Trending products
-* [ ] Flash sale section
-* [ ] Recommended section
+* [x] Flash sale section
+* [x] Recommended section
 
 ### Product Listing
 
 * [x] Filters
 * [x] Sorting
-* [ ] Infinite scroll
+* [x] Infinite scroll
 * [x] Pagination
 
 ### Product Details
 
 * [x] Image gallery
-* [ ] Product reviews
+* [x] Product reviews
 * [x] Ratings
-* [ ] Related products
-* [ ] Frequently bought together
+* [x] Related products
+* [x] Frequently bought together
 
 ---
 
 ## Phase 8 - Cart
 
-* [ ] Add to cart
-* [ ] Update quantity
-* [ ] Remove item
-* [ ] Save for later
-* [ ] Cart persistence
-* [ ] Guest cart
-* [ ] Merge cart after login
+* [x] Add to cart
+* [x] Update quantity
+* [x] Remove item
+* [x] Save for later
+* [x] Cart persistence
+* [x] Guest cart
+* [x] Merge cart after login
 
 ---
 
 ## Phase 9 - Checkout
 
-* [ ] Delivery slot selection
-* [ ] Address selection
-* [ ] Coupon application
-* [ ] Payment selection
-* [ ] Order summary
-* [ ] Tax calculation
-* [ ] Shipping calculation
+* [x] Delivery slot selection
+* [x] Address selection
+* [x] Coupon application
+* [x] Payment selection
+* [x] Order summary
+* [x] Tax calculation
+* [x] Shipping calculation
 
 ---
 
@@ -342,26 +342,26 @@ Goal: Build a backend-connected admin dashboard for managing BookPie bookstore o
 
 ### SSLCommerz
 
-* [ ] Initiate payment
-* [ ] Validation callback
-* [ ] Refund support
+* [x] Initiate payment
+* [x] Validation callback
+* [x] Refund support
 
 ### Stripe
 
-* [ ] PaymentIntent
-* [ ] Stripe Elements
-* [ ] Webhook handling
+* [x] PaymentIntent
+* [x] Stripe Elements
+* [x] Webhook handling
 
 ### bKash
 
-* [ ] Create payment
-* [ ] Execute payment
-* [ ] Refund support
+* [x] Create payment
+* [x] Execute payment
+* [x] Refund support
 
 ### Nagad
 
-* [ ] Payment initiation
-* [ ] Verification
+* [x] Payment initiation
+* [x] Verification
 
 ---
 
@@ -369,11 +369,11 @@ Goal: Build a backend-connected admin dashboard for managing BookPie bookstore o
 
 * [x] Order creation
 * [x] Order confirmation
-* [ ] Order cancellation
-* [ ] Order refund
-* [ ] Order return
+* [x] Order cancellation
+* [x] Order refund
+* [x] Order return
 * [x] Order timeline
-* [ ] Invoice generation
+* [x] Invoice generation
 
 Order States:
 
@@ -390,50 +390,50 @@ Order States:
 
 ## Phase 12 - Warehouse Management
 
-* [ ] Picking queue
-* [ ] Packing queue
-* [ ] Batch picking
-* [ ] Picker assignment
-* [ ] Barcode scanning
-* [ ] Packing verification
-* [ ] Dispatch management
+* [x] Picking queue
+* [x] Packing queue
+* [x] Batch picking
+* [x] Picker assignment
+* [x] Barcode scanning
+* [x] Packing verification
+* [x] Dispatch management
 
 ---
 
 ## Phase 13 - Delivery Management
 
-* [ ] Delivery zones
-* [ ] Delivery fee engine
-* [ ] Rider management
-* [ ] Rider onboarding
-* [ ] Rider app API
-* [ ] Route optimization
-* [ ] Live tracking
-* [ ] Delivery proof upload
-* [ ] Failed delivery workflow
+* [x] Delivery zones
+* [x] Delivery fee engine
+* [x] Rider management
+* [x] Rider onboarding
+* [x] Rider app API
+* [x] Route optimization
+* [x] Live tracking
+* [x] Delivery proof upload
+* [x] Failed delivery workflow
 
 ---
 
 ## Phase 14 - Promotions
 
-* [ ] Coupon engine
-* [ ] Buy X Get Y
-* [ ] Flash sales
-* [ ] Referral system
-* [ ] Loyalty points
-* [ ] Cashback engine
-* [ ] Membership plans
+* [x] Coupon engine
+* [x] Buy X Get Y
+* [x] Flash sales
+* [x] Referral system
+* [x] Loyalty points
+* [x] Cashback engine
+* [x] Membership plans
 
 ---
 
 ## Phase 15 - Notifications
 
-* [ ] Email service
-* [ ] SMS service
-* [ ] Push notifications
-* [ ] WhatsApp integration
-* [ ] Order notifications
-* [ ] Marketing notifications
+* [x] Email service
+* [x] SMS service
+* [x] Push notifications
+* [x] WhatsApp integration
+* [x] Order notifications
+* [x] Marketing notifications
 
 ---
 

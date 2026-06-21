@@ -1,6 +1,7 @@
 import { AppPromo } from "@/components/home/app-promo";
 import { CategoryShowcaseGrid } from "@/components/home/category-showcase-grid";
 import { CircularCategoryRail } from "@/components/home/circular-category-rail";
+import { FlashSaleSection } from "@/components/home/flash-sale-section";
 import { FloatingChatButton } from "@/components/home/floating-chat-button";
 import { HeroCarousel } from "@/components/home/hero-carousel";
 import { PersonRail } from "@/components/home/person-rail";
@@ -22,6 +23,12 @@ import {
 
 export default function HomePage() {
   const [newBooks, safeFood, trending, preOrder, islamic, seerah, history, family] = productSections;
+  const recommended = {
+    id: "recommended",
+    title: "Recommended for you",
+    href: "/books/recommended",
+    products: [...islamic.products.slice(0, 4), ...history.products.slice(0, 4), ...newBooks.products.slice(0, 2)],
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -31,7 +38,9 @@ export default function HomePage() {
         <HeroCarousel banners={heroBanners} />
         <CategoryShowcaseGrid groups={showcaseGroups} />
         <ProductRail section={newBooks} />
-        <ProductRail section={trending} />
+        <FlashSaleSection products={[...trending.products, ...preOrder.products]} />
+        <ProductRail section={recommended} />
+        <ProductRail section={safeFood} />
         <CircularCategoryRail title="সেফ ফুড" href="/categories/safe-food" categories={circularCategories} />
         <ProductRail section={trending} />
         <ProductRail section={preOrder} />

@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CheckCircle2, ShoppingBag } from "lucide-react";
-import type { ReactNode } from "react";
+import { CheckCircle2, ShoppingBag, Tag } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { CheckoutField } from "@/components/checkout/checkout-field";
 import { SummaryLine } from "@/components/cart/summary-line";
+import { AddressCard } from "@/components/ui/address-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -20,19 +21,49 @@ const checkoutSchema = z.object({
   email: z.string().email("সঠিক ইমেইল লিখুন").optional().or(z.literal("")),
   city: z.string().min(2, "শহর লিখুন"),
   address: z.string().min(10, "পূর্ণ ঠিকানা লিখুন"),
+  addressPreset: z.enum(["home", "office", "custom"]),
+  deliverySlot: z.enum(["standard", "evening", "express"]),
   paymentMethod: z.enum(["cash_on_delivery", "bkash", "sslcommerz"]),
+  couponCode: z.string().optional(),
 });
 
 type CheckoutValues = z.infer<typeof checkoutSchema>;
 
+const savedAddresses = [
+  {
+    id: "home",
+    label: "Home",
+    name: "Demo Customer",
+    phone: "01712345678",
+    city: "ঢাকা",
+    address: "House 12, Road 3, Dhanmondi, Dhaka",
+  },
+  {
+    id: "office",
+    label: "Office",
+    name: "Demo Customer",
+    phone: "01712345678",
+    city: "ঢাকা",
+    address: "Level 4, Mohakhali DOHS, Dhaka",
+  },
+] as const;
+
+const deliverySlots = [
+  { label: "Standard delivery (2-4 days)", value: "standard", fee: 0 },
+  { label: "Evening delivery (6 PM - 10 PM)", value: "evening", fee: 20 },
+  { label: "Express delivery (next day)", value: "express", fee: 40 },
+] as const;
+
+const validCoupons = new Set(["BOOKPIE10", "SAVE10"]);
+
 export function CheckoutPage() {
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
+  const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
+  const [couponError, setCouponError] = useState<string | null>(null);
   const items = useCartStore((state) => state.items);
   const clearCart = useCartStore((state) => state.clearCart);
   const subtotal = useCartStore((state) => state.originalSubtotal());
   const payable = useCartStore((state) => state.subtotal());
-  const delivery = items.length ? 79 : 0;
-  const total = payable + delivery;
   const discount = Math.max(subtotal - payable, 0);
   const form = useForm<CheckoutValues>({
     resolver: zodResolver(checkoutSchema),
@@ -42,10 +73,53 @@ export function CheckoutPage() {
       email: "",
       city: "ঢাকা",
       address: "",
+      addressPreset: "custom",
+      deliverySlot: "standard",
       paymentMethod: "cash_on_delivery",
+      couponCode: "",
     },
   });
+  const addressPreset = form.watch("addressPreset");
+  const watchedCity = form.watch("city");
+  const watchedDeliverySlot = form.watch("deliverySlot");
   const orderItems = useMemo(() => items.map((item) => `${item.product.title} x ${item.quantity}`), [items]);
+  const currentDeliveryBase = watchedCity === "ঢাকা" ? 79 : 120;
+  const currentSlotFee = deliverySlots.find((slot) => slot.value === watchedDeliverySlot)?.fee ?? 0;
+  const currentDelivery = items.length ? currentDeliveryBase + currentSlotFee : 0;
+  const couponDiscount = appliedCoupon ? Math.round(payable * 0.1) : 0;
+  const taxableTotal = Math.max(payable - couponDiscount, 0);
+  const tax = Math.round(taxableTotal * 0.05);
+  const currentTotal = taxableTotal + currentDelivery + tax;
+
+  const selectSavedAddress = (addressId: "home" | "office") => {
+    const address = savedAddresses.find((item) => item.id === addressId);
+    if (!address) return;
+
+    form.setValue("addressPreset", addressId, { shouldValidate: true });
+    form.setValue("name", address.name, { shouldValidate: true });
+    form.setValue("phone", address.phone, { shouldValidate: true });
+    form.setValue("city", address.city, { shouldValidate: true });
+    form.setValue("address", address.address, { shouldValidate: true });
+  };
+
+  const applyCoupon = () => {
+    const normalized = form.getValues("couponCode")?.trim().toUpperCase();
+
+    if (!normalized) {
+      setAppliedCoupon(null);
+      setCouponError("কুপন কোড লিখুন");
+      return;
+    }
+
+    if (!validCoupons.has(normalized)) {
+      setAppliedCoupon(null);
+      setCouponError("কুপনটি পাওয়া যায়নি");
+      return;
+    }
+
+    setAppliedCoupon(normalized);
+    setCouponError(null);
+  };
 
   const submitOrder = form.handleSubmit(() => {
     setOrderNumber(`BP-${Date.now().toString().slice(-8)}`);
@@ -94,31 +168,65 @@ export function CheckoutPage() {
         <form className="space-y-6" onSubmit={submitOrder}>
           <section className="rounded-lg border bg-card p-6">
             <h2 className="text-lg font-semibold">ডেলিভারি তথ্য</h2>
-            <div className="mt-5 grid gap-4 sm:grid-cols-2">
-              <Field label="নাম" error={form.formState.errors.name?.message}>
-                <Input {...form.register("name")} placeholder="আপনার নাম" />
-              </Field>
-              <Field label="মোবাইল নম্বর" error={form.formState.errors.phone?.message}>
-                <Input {...form.register("phone")} placeholder="01XXXXXXXXX" />
-              </Field>
-              <Field label="ইমেইল" error={form.formState.errors.email?.message}>
-                <Input {...form.register("email")} placeholder="name@example.com" />
-              </Field>
-              <Field label="শহর" error={form.formState.errors.city?.message}>
-                <Input {...form.register("city")} />
-              </Field>
+            <div className="mt-5 grid gap-4 md:grid-cols-2">
+              {savedAddresses.map((address) => (
+                <button
+                  key={address.id}
+                  type="button"
+                  className="text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  onClick={() => selectSavedAddress(address.id)}
+                >
+                  <AddressCard
+                    name={address.name}
+                    phone={address.phone}
+                    address={address.address}
+                    label={address.label}
+                    selected={addressPreset === address.id}
+                    className="h-full"
+                  />
+                </button>
+              ))}
             </div>
-            <Field label="ঠিকানা" error={form.formState.errors.address?.message} className="mt-4">
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              <CheckoutField label="নাম" error={form.formState.errors.name?.message}>
+                <Input {...form.register("name")} placeholder="আপনার নাম" />
+              </CheckoutField>
+              <CheckoutField label="মোবাইল নম্বর" error={form.formState.errors.phone?.message}>
+                <Input {...form.register("phone")} placeholder="01XXXXXXXXX" />
+              </CheckoutField>
+              <CheckoutField label="ইমেইল" error={form.formState.errors.email?.message}>
+                <Input {...form.register("email")} placeholder="name@example.com" />
+              </CheckoutField>
+              <CheckoutField label="শহর" error={form.formState.errors.city?.message}>
+                <Input {...form.register("city")} />
+              </CheckoutField>
+            </div>
+            <CheckoutField label="ঠিকানা" error={form.formState.errors.address?.message} className="mt-4">
               <textarea
                 {...form.register("address")}
                 className="min-h-28 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 placeholder="বাসা, রোড, এলাকা"
               />
-            </Field>
+            </CheckoutField>
+          </section>
+          <section className="rounded-lg border bg-card p-6">
+            <h2 className="text-lg font-semibold">ডেলিভারি স্লট</h2>
+            <CheckoutField label="স্লট নির্বাচন করুন" error={form.formState.errors.deliverySlot?.message} className="mt-5">
+              <Select
+                {...form.register("deliverySlot")}
+                options={deliverySlots.map((slot) => ({
+                  label: `${slot.label}${slot.fee ? ` +${formatTaka(slot.fee)}` : ""}`,
+                  value: slot.value,
+                }))}
+              />
+            </CheckoutField>
+            <p className="mt-3 text-sm text-muted-foreground">
+              শিপিং চার্জ: {formatTaka(currentDeliveryBase)} + স্লট চার্জ {formatTaka(currentSlotFee)}
+            </p>
           </section>
           <section className="rounded-lg border bg-card p-6">
             <h2 className="text-lg font-semibold">পেমেন্ট</h2>
-            <Field label="পেমেন্ট পদ্ধতি" error={form.formState.errors.paymentMethod?.message} className="mt-5">
+            <CheckoutField label="পেমেন্ট পদ্ধতি" error={form.formState.errors.paymentMethod?.message} className="mt-5">
               <Select
                 {...form.register("paymentMethod")}
                 options={[
@@ -127,7 +235,19 @@ export function CheckoutPage() {
                   { label: "SSLCommerz (mock ready)", value: "sslcommerz" },
                 ]}
               />
-            </Field>
+            </CheckoutField>
+          </section>
+          <section className="rounded-lg border bg-card p-6">
+            <h2 className="text-lg font-semibold">কুপন</h2>
+            <div className="mt-4 flex gap-2">
+              <Input {...form.register("couponCode")} placeholder="BOOKPIE10" aria-label="Coupon code" />
+              <Button type="button" variant="outline" onClick={applyCoupon}>
+                <Tag className="h-4 w-4" aria-hidden="true" />
+                Apply
+              </Button>
+            </div>
+            {couponError ? <p className="mt-2 text-xs font-medium text-destructive">{couponError}</p> : null}
+            {appliedCoupon ? <p className="mt-2 text-xs font-medium text-primary">{appliedCoupon} applied for 10% off.</p> : null}
           </section>
           <Button type="submit" className="w-full sm:w-auto">
             অর্ডার কনফার্ম করুন
@@ -145,28 +265,13 @@ export function CheckoutPage() {
           <div className="mt-5 space-y-5 text-sm">
             <SummaryLine label="দাম" value={formatTaka(subtotal)} />
             <SummaryLine label="ছাড়" value={`-${formatTaka(discount)}`} />
-            <SummaryLine label="ডেলিভারি ফি" value={formatTaka(delivery)} />
-            <SummaryLine label="সর্বমোট" value={formatTaka(total)} strong />
+            {couponDiscount ? <SummaryLine label={`কুপন (${appliedCoupon})`} value={`-${formatTaka(couponDiscount)}`} /> : null}
+            <SummaryLine label="ভ্যাট/ট্যাক্স" value={formatTaka(tax)} />
+            <SummaryLine label="ডেলিভারি ফি" value={formatTaka(currentDelivery)} />
+            <SummaryLine label="সর্বমোট" value={formatTaka(currentTotal)} strong />
           </div>
         </aside>
       </div>
     </main>
-  );
-}
-
-type FieldProps = {
-  label: string;
-  error?: string;
-  className?: string;
-  children: ReactNode;
-};
-
-function Field({ label, error, className, children }: FieldProps) {
-  return (
-    <label className={className ? `block ${className}` : "block"}>
-      <span className="text-sm font-medium">{label}</span>
-      <span className="mt-2 block">{children}</span>
-      {error ? <span className="mt-1 block text-xs font-medium text-destructive">{error}</span> : null}
-    </label>
   );
 }

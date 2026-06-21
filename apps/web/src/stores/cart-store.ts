@@ -19,6 +19,7 @@ type CartUiState = {
   updateQuantity: (productId: string, quantity: number) => void;
   removeItem: (productId: string) => void;
   clearCart: () => void;
+  mergeGuestCartAfterLogin: () => void;
   toggleWishlist: (product: Product) => void;
   removeWishlist: (productId: string) => void;
   moveWishlistToCart: (productId: string) => void;
@@ -64,6 +65,25 @@ export const useCartStore = create<CartUiState>()(
         set((state) => ({ items: state.items.filter((item) => item.product.id !== productId) }));
       },
       clearCart: () => set({ items: [] }),
+      mergeGuestCartAfterLogin: () => {
+        set((state) => {
+          const itemsById = new Map<string, CartLine>();
+          for (const item of state.items) {
+            const existing = itemsById.get(item.product.id);
+            itemsById.set(item.product.id, {
+              product: item.product,
+              quantity: Math.max(1, (existing?.quantity ?? 0) + item.quantity),
+            });
+          }
+
+          const wishlistById = new Map(state.wishlist.map((product) => [product.id, product]));
+
+          return {
+            items: Array.from(itemsById.values()),
+            wishlist: Array.from(wishlistById.values()),
+          };
+        });
+      },
       toggleWishlist: (product) => {
         set((state) => {
           const exists = state.wishlist.some((item) => item.id === product.id);

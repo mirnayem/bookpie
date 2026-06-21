@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createDemoAuthResponse } from "@/lib/demo-auth";
 import { useAuthStore } from "@/stores/auth-store";
+import { useCartStore } from "@/stores/cart-store";
 import type { FormEvent } from "react";
 import { useState } from "react";
 
@@ -18,6 +19,7 @@ export function SigninPage({ illustration }: SigninPageProps) {
   const setAuth = useAuthStore((state) => state.setAuth);
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
+  const mergeGuestCartAfterLogin = useCartStore((state) => state.mergeGuestCartAfterLogin);
   const [phone, setPhone] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -33,6 +35,7 @@ export function SigninPage({ illustration }: SigninPageProps) {
     }
 
     setAuth(createDemoAuthResponse(normalizedPhone));
+    mergeGuestCartAfterLogin();
     setError(null);
     setMessage("ডেমো একাউন্টে লগইন সম্পন্ন হয়েছে।");
   };
@@ -65,7 +68,16 @@ export function SigninPage({ illustration }: SigninPageProps) {
         </form>
         <div className="mt-5 grid gap-3">
           <LoginModal illustration={illustration} />
-          <Button type="button" variant="outline" onClick={() => { setAuth(createDemoAuthResponse("google-customer@bookpie.local")); setMessage("Google demo login সম্পন্ন হয়েছে।"); setError(null); }}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              setAuth(createDemoAuthResponse("google-customer@bookpie.local"));
+              mergeGuestCartAfterLogin();
+              setMessage("Google demo login সম্পন্ন হয়েছে।");
+              setError(null);
+            }}
+          >
             গুগল দিয়ে লগইন করুন
           </Button>
         </div>

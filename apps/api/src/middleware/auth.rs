@@ -10,7 +10,7 @@ use uuid::Uuid;
 use crate::{error::ApiError, models::ids::UserId, response::ApiResponse, state::AppState};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "snake_case")]
 pub enum UserRole {
     Customer,
     WarehouseManager,

@@ -67,3 +67,71 @@ pub struct UpdateStockRequest {
     #[validate(length(max = 240))]
     pub note: Option<String>,
 }
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WarehouseOrder {
+    pub order_id: Uuid,
+    pub status: String,
+    pub customer_id: Uuid,
+    pub item_count: i64,
+    pub total: i32,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Clone, Debug, Deserialize, Validate)]
+#[serde(rename_all = "camelCase")]
+pub struct BatchPickingRequest {
+    #[validate(length(min = 1, max = 50))]
+    pub order_ids: Vec<Uuid>,
+    #[validate(length(max = 240))]
+    pub note: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Validate)]
+#[serde(rename_all = "camelCase")]
+pub struct AssignPickerRequest {
+    pub picker_id: Uuid,
+    #[validate(length(max = 240))]
+    pub note: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Validate)]
+#[serde(rename_all = "camelCase")]
+pub struct BarcodeScanRequest {
+    pub order_id: Uuid,
+    #[validate(length(min = 3, max = 80))]
+    pub barcode: String,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BarcodeScanResult {
+    pub order_id: Uuid,
+    pub barcode: String,
+    pub matched: bool,
+    pub book_id: Option<Uuid>,
+    pub title: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Validate)]
+#[serde(rename_all = "camelCase")]
+pub struct PackingVerificationRequest {
+    pub order_id: Uuid,
+    #[validate(range(min = 1))]
+    pub package_count: i32,
+    #[validate(length(max = 240))]
+    pub note: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Validate)]
+#[serde(rename_all = "camelCase")]
+pub struct DispatchRequest {
+    pub order_id: Uuid,
+    #[validate(length(max = 80))]
+    pub carrier: Option<String>,
+    #[validate(length(max = 120))]
+    pub tracking_number: Option<String>,
+    #[validate(length(max = 240))]
+    pub note: Option<String>,
+}

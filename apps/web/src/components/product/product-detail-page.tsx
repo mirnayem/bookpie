@@ -1,10 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
+import { FrequentlyBoughtTogether } from "@/components/product/frequently-bought-together";
 import { ProductActions } from "@/components/product/product-actions";
 import { ProductSampleButton } from "@/components/product/product-sample-button";
 import { ShareProductButton } from "@/components/product/share-product-button";
+import { ProductReviews } from "@/components/product/product-reviews";
 import { ProductSuggestionCard } from "@/components/product/product-suggestion-card";
 import { RatingBars } from "@/components/product/rating-bars";
+import { RelatedProducts } from "@/components/product/related-products";
 import { formatTaka } from "@/lib/format";
 import type { Product, PromoBanner } from "@/types/storefront";
 
@@ -83,7 +86,10 @@ export function ProductDetailPage({ product, suggestions, promos }: ProductDetai
           </Link>
         ))}
       </div>
+      <FrequentlyBoughtTogether product={product} products={suggestions} />
+      <RelatedProducts products={suggestions.filter((item) => item.id !== product.id)} />
       <RatingBars />
+      <ProductReviews product={product} />
     </main>
   );
 }

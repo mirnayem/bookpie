@@ -11,7 +11,7 @@ export const orderStatusSchema = z.enum([
   "refunded",
 ]);
 
-export const paymentProviderSchema = z.enum(["sslcommerz", "bkash"]);
+export const paymentProviderSchema = z.enum(["sslcommerz", "bkash", "stripe", "nagad"]);
 export const paymentStatusSchema = z.enum([
   "pending",
   "paid",
@@ -77,6 +77,56 @@ export const assignDeliveryRequestSchema = z.object({
   note: z.string().max(240).nullable().optional(),
 });
 
+export const initiatePaymentRequestSchema = z.object({
+  orderId: z.string().uuid(),
+  amount: z.number().int().positive().optional(),
+  currency: z.string().min(3).max(3).default("BDT").optional(),
+});
+
+export const paymentGatewayResponseSchema = z.object({
+  provider: paymentProviderSchema,
+  orderId: z.string().uuid(),
+  transactionId: z.string(),
+  redirectUrl: z.string().url().nullable(),
+  status: paymentStatusSchema,
+  message: z.string(),
+});
+
+export const verifyPaymentRequestSchema = z.object({
+  orderId: z.string().uuid(),
+  transactionId: z.string().min(6).max(120),
+  success: z.boolean(),
+});
+
+export const refundPaymentRequestSchema = z.object({
+  orderId: z.string().uuid(),
+  transactionId: z.string().min(6).max(120),
+  amount: z.number().int().positive().optional(),
+  reason: z.string().max(240).optional(),
+});
+
+export const orderActionRequestSchema = z.object({
+  reason: z.string().max(240).optional(),
+});
+
+export const invoiceLineSchema = z.object({
+  label: z.string(),
+  quantity: z.number().int().nonnegative(),
+  amount: z.number().int().nonnegative(),
+});
+
+export const invoiceSchema = z.object({
+  orderId: z.string().uuid(),
+  invoiceNumber: z.string(),
+  issuedAt: z.string().datetime(),
+  customerId: z.string().uuid(),
+  subtotal: z.number().int().nonnegative(),
+  shippingFee: z.number().int().nonnegative(),
+  discountTotal: z.number().int().nonnegative(),
+  total: z.number().int().nonnegative(),
+  lines: z.array(invoiceLineSchema),
+});
+
 export type OrderStatus = z.infer<typeof orderStatusSchema>;
 export type PaymentProvider = z.infer<typeof paymentProviderSchema>;
 export type PaymentStatus = z.infer<typeof paymentStatusSchema>;
@@ -89,3 +139,10 @@ export type UpdateOrderStatusRequest = z.infer<
   typeof updateOrderStatusRequestSchema
 >;
 export type AssignDeliveryRequest = z.infer<typeof assignDeliveryRequestSchema>;
+export type InitiatePaymentRequest = z.infer<typeof initiatePaymentRequestSchema>;
+export type PaymentGatewayResponse = z.infer<typeof paymentGatewayResponseSchema>;
+export type VerifyPaymentRequest = z.infer<typeof verifyPaymentRequestSchema>;
+export type RefundPaymentRequest = z.infer<typeof refundPaymentRequestSchema>;
+export type OrderActionRequest = z.infer<typeof orderActionRequestSchema>;
+export type InvoiceLine = z.infer<typeof invoiceLineSchema>;
+export type Invoice = z.infer<typeof invoiceSchema>;

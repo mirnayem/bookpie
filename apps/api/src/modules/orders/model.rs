@@ -36,6 +36,8 @@ impl OrderStatus {
 pub enum PaymentProvider {
     Sslcommerz,
     Bkash,
+    Stripe,
+    Nagad,
 }
 
 impl PaymentProvider {
@@ -43,6 +45,18 @@ impl PaymentProvider {
         match self {
             Self::Sslcommerz => "sslcommerz",
             Self::Bkash => "bkash",
+            Self::Stripe => "stripe",
+            Self::Nagad => "nagad",
+        }
+    }
+
+    pub fn parse(value: &str) -> Option<Self> {
+        match value {
+            "sslcommerz" => Some(Self::Sslcommerz),
+            "bkash" => Some(Self::Bkash),
+            "stripe" => Some(Self::Stripe),
+            "nagad" => Some(Self::Nagad),
+            _ => None,
         }
     }
 }
@@ -55,6 +69,18 @@ pub enum PaymentStatus {
     Failed,
     Cancelled,
     Refunded,
+}
+
+impl PaymentStatus {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Pending => "pending",
+            Self::Paid => "paid",
+            Self::Failed => "failed",
+            Self::Cancelled => "cancelled",
+            Self::Refunded => "refunded",
+        }
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -141,6 +167,77 @@ pub struct AssignDeliveryRequest {
     pub status: Option<DeliveryStatus>,
     #[validate(length(max = 240))]
     pub note: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Validate)]
+#[serde(rename_all = "camelCase")]
+pub struct InitiatePaymentRequest {
+    pub order_id: Uuid,
+    #[validate(range(min = 1))]
+    pub amount: Option<i32>,
+    #[validate(length(min = 3, max = 3))]
+    pub currency: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Validate)]
+#[serde(rename_all = "camelCase")]
+pub struct VerifyPaymentRequest {
+    pub order_id: Uuid,
+    #[validate(length(min = 6, max = 120))]
+    pub transaction_id: String,
+    pub success: bool,
+}
+
+#[derive(Clone, Debug, Deserialize, Validate)]
+#[serde(rename_all = "camelCase")]
+pub struct RefundPaymentRequest {
+    pub order_id: Uuid,
+    #[validate(length(min = 6, max = 120))]
+    pub transaction_id: String,
+    #[validate(range(min = 1))]
+    pub amount: Option<i32>,
+    #[validate(length(max = 240))]
+    pub reason: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PaymentGatewayResponse {
+    pub provider: PaymentProvider,
+    pub order_id: Uuid,
+    pub transaction_id: String,
+    pub redirect_url: Option<String>,
+    pub status: PaymentStatus,
+    pub message: String,
+}
+
+#[derive(Clone, Debug, Deserialize, Validate)]
+#[serde(rename_all = "camelCase")]
+pub struct OrderActionRequest {
+    #[validate(length(max = 240))]
+    pub reason: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct InvoiceLine {
+    pub label: String,
+    pub quantity: i32,
+    pub amount: i32,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Invoice {
+    pub order_id: Uuid,
+    pub invoice_number: String,
+    pub issued_at: DateTime<Utc>,
+    pub customer_id: Uuid,
+    pub subtotal: i32,
+    pub shipping_fee: i32,
+    pub discount_total: i32,
+    pub total: i32,
+    pub lines: Vec<InvoiceLine>,
 }
 
 #[derive(Clone, Debug, Deserialize)]

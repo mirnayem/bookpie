@@ -6,8 +6,10 @@ use crate::{
     modules::{
         admin::controller::admin_router, auth::controller::auth_router,
         books::controller::catalog_router, carts::controller::cart_router,
-        inventory::controller::inventory_router, orders::controller::order_router,
-        profiles::controller::profile_router, search::controller::search_router,
+        delivery::controller::delivery_router, inventory::controller::inventory_router,
+        notifications::controller::notification_router, orders::controller::order_router,
+        profiles::controller::profile_router, promotions::controller::promotion_router,
+        search::controller::search_router,
     },
     routes::health::health_router,
     state::AppState,
@@ -24,7 +26,10 @@ pub fn build_router(state: AppState) -> Router {
         .nest("/api/v1", search_router())
         .nest("/api/v1", cart_router())
         .nest("/api/v1", profile_router())
+        .nest("/api/v1", promotion_router())
+        .nest("/api/v1", notification_router())
         .nest("/api/v1", inventory_router())
+        .nest("/api/v1", delivery_router())
         .nest("/api/v1", order_router())
         .nest("/api/v1", admin_router())
         .nest("/api/v1", protected_router())

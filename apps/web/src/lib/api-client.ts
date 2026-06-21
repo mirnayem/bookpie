@@ -58,7 +58,7 @@ export function adminRequest<T>(token: string | null | undefined, path: string, 
 }
 
 export function login(payload: LoginRequest) {
-  return apiRequest<AuthResponse>("/login", {
+  return apiRequest<AuthResponse>("/auth/login", {
     method: "POST",
     body: payload,
   });

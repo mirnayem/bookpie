@@ -3,7 +3,7 @@ use uuid::Uuid;
 
 use crate::{error::ApiError, models::ids::UserId};
 
-use super::model::{InventoryItem, StockMovement};
+use super::model::{BarcodeScanResult, InventoryItem, StockMovement, WarehouseOrder};
 
 #[derive(Clone)]
 pub struct InventoryRepository {
@@ -148,6 +148,120 @@ impl InventoryRepository {
 
         Ok(rows.into_iter().map(stock_movement_from_row).collect())
     }
+
+    pub async fn warehouse_queue(
+        &self,
+        statuses: &[&str],
+    ) -> Result<Vec<WarehouseOrder>, ApiError> {
+        let rows = sqlx::query(WAREHOUSE_QUEUE)
+            .bind(statuses)
+            .fetch_all(&self.pool)
+            .await?;
+        Ok(rows.into_iter().map(warehouse_order_from_row).collect())
+    }
+
+    pub async fn update_orders_status(
+        &self,
+        order_ids: &[Uuid],
+        status: &str,
+        note: Option<&str>,
+        actor: UserId,
+    ) -> Result<Vec<WarehouseOrder>, ApiError> {
+        let mut transaction = self.pool.begin().await?;
+        for order_id in order_ids {
+            sqlx::query("UPDATE orders SET status = $2, updated_at = now() WHERE id = $1")
+                .bind(order_id)
+                .bind(status)
+                .execute(&mut *transaction)
+                .await?;
+            sqlx::query(
+                "INSERT INTO order_timeline (order_id, status, note, created_by) VALUES ($1, $2, $3, $4)",
+            )
+            .bind(order_id)
+            .bind(status)
+            .bind(note)
+            .bind(actor.0)
+            .execute(&mut *transaction)
+            .await?;
+        }
+        transaction.commit().await?;
+        self.warehouse_orders_by_ids(order_ids).await
+    }
+
+    pub async fn append_order_timeline(
+        &self,
+        order_id: Uuid,
+        status: &str,
+        note: Option<&str>,
+        actor: UserId,
+    ) -> Result<WarehouseOrder, ApiError> {
+        sqlx::query(
+            "INSERT INTO order_timeline (order_id, status, note, created_by) VALUES ($1, $2, $3, $4)",
+        )
+        .bind(order_id)
+        .bind(status)
+        .bind(note)
+        .bind(actor.0)
+        .execute(&self.pool)
+        .await?;
+        self.warehouse_order_by_id(order_id).await
+    }
+
+    pub async fn scan_barcode(
+        &self,
+        order_id: Uuid,
+        barcode: &str,
+    ) -> Result<BarcodeScanResult, ApiError> {
+        let row = sqlx::query(
+            r#"
+            SELECT oi.book_id, oi.title
+            FROM order_items oi
+            INNER JOIN books b ON b.id = oi.book_id
+            WHERE oi.order_id = $1 AND b.barcode = $2
+            "#,
+        )
+        .bind(order_id)
+        .bind(barcode)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(match row {
+            Some(row) => BarcodeScanResult {
+                order_id,
+                barcode: barcode.to_string(),
+                matched: true,
+                book_id: row.get("book_id"),
+                title: row.get("title"),
+            },
+            None => BarcodeScanResult {
+                order_id,
+                barcode: barcode.to_string(),
+                matched: false,
+                book_id: None,
+                title: None,
+            },
+        })
+    }
+
+    async fn warehouse_orders_by_ids(
+        &self,
+        order_ids: &[Uuid],
+    ) -> Result<Vec<WarehouseOrder>, ApiError> {
+        let rows = sqlx::query(WAREHOUSE_BY_IDS)
+            .bind(order_ids)
+            .fetch_all(&self.pool)
+            .await?;
+        Ok(rows.into_iter().map(warehouse_order_from_row).collect())
+    }
+
+    async fn warehouse_order_by_id(&self, order_id: Uuid) -> Result<WarehouseOrder, ApiError> {
+        let row = sqlx::query(WAREHOUSE_BY_ID)
+            .bind(order_id)
+            .fetch_optional(&self.pool)
+            .await?
+            .ok_or(ApiError::NotFound)?;
+        Ok(warehouse_order_from_row(row))
+    }
 }
 
 async fn default_warehouse_id(
@@ -181,6 +295,17 @@ fn stock_movement_from_row(row: PgRow) -> StockMovement {
         reason: row.get("reason"),
         note: row.get("note"),
         created_by: row.get("created_by"),
+        created_at: row.get("created_at"),
+    }
+}
+
+fn warehouse_order_from_row(row: PgRow) -> WarehouseOrder {
+    WarehouseOrder {
+        order_id: row.get("order_id"),
+        status: row.get("status"),
+        customer_id: row.get("customer_id"),
+        item_count: row.get("item_count"),
+        total: row.get("total"),
         created_at: row.get("created_at"),
     }
 }
@@ -238,4 +363,36 @@ const INVENTORY_SEARCH_OUT: &str = r#"
     WHERE (title ILIKE $1 OR slug ILIKE $1) AND stock = 0
     ORDER BY updated_at DESC
     LIMIT $2 OFFSET $3
+"#;
+
+const WAREHOUSE_QUEUE: &str = r#"
+    SELECT o.id AS order_id, o.status, o.user_id AS customer_id,
+           COALESCE(SUM(oi.quantity), 0)::BIGINT AS item_count,
+           o.total, o.created_at
+    FROM orders o
+    LEFT JOIN order_items oi ON oi.order_id = o.id
+    WHERE o.status = ANY($1)
+    GROUP BY o.id
+    ORDER BY o.created_at
+"#;
+
+const WAREHOUSE_BY_IDS: &str = r#"
+    SELECT o.id AS order_id, o.status, o.user_id AS customer_id,
+           COALESCE(SUM(oi.quantity), 0)::BIGINT AS item_count,
+           o.total, o.created_at
+    FROM orders o
+    LEFT JOIN order_items oi ON oi.order_id = o.id
+    WHERE o.id = ANY($1)
+    GROUP BY o.id
+    ORDER BY o.created_at
+"#;
+
+const WAREHOUSE_BY_ID: &str = r#"
+    SELECT o.id AS order_id, o.status, o.user_id AS customer_id,
+           COALESCE(SUM(oi.quantity), 0)::BIGINT AS item_count,
+           o.total, o.created_at
+    FROM orders o
+    LEFT JOIN order_items oi ON oi.order_id = o.id
+    WHERE o.id = $1
+    GROUP BY o.id
 "#;

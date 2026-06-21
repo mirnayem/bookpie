@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createDemoAuthResponse } from "@/lib/demo-auth";
 import { useAuthStore } from "@/stores/auth-store";
+import { useCartStore } from "@/stores/cart-store";
 
 type LoginModalProps = {
   illustration: string;
@@ -17,6 +18,7 @@ type LoginModalProps = {
 export function LoginModal({ illustration }: LoginModalProps) {
   const [open, setOpen] = useState(false);
   const setAuth = useAuthStore((state) => state.setAuth);
+  const mergeGuestCartAfterLogin = useCartStore((state) => state.mergeGuestCartAfterLogin);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -31,6 +33,7 @@ export function LoginModal({ illustration }: LoginModalProps) {
     }
 
     setAuth(createDemoAuthResponse(email));
+    mergeGuestCartAfterLogin();
     setError(null);
     setNotice(null);
     setOpen(false);

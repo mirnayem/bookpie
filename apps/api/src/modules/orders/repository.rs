@@ -232,6 +232,54 @@ impl OrderRepository {
         .await
     }
 
+    pub async fn update_payment_state(
+        &self,
+        order_id: Uuid,
+        provider: PaymentProvider,
+        status: PaymentStatus,
+        note: &str,
+        actor: Option<UserId>,
+    ) -> Result<Order, ApiError> {
+        let result = sqlx::query(
+            "UPDATE orders SET payment_provider = $2, payment_status = $3, updated_at = now() WHERE id = $1",
+        )
+        .bind(order_id)
+        .bind(provider.as_str())
+        .bind(status.as_str())
+        .execute(&self.pool)
+        .await?;
+
+        if result.rows_affected() == 0 {
+            return Err(ApiError::NotFound);
+        }
+
+        let mut transaction = self.pool.begin().await?;
+        insert_timeline(
+            &mut transaction,
+            order_id,
+            status.as_str(),
+            Some(note),
+            actor.map(|user_id| user_id.0),
+        )
+        .await?;
+        transaction.commit().await?;
+
+        self.admin_order(order_id).await
+    }
+
+    pub async fn append_timeline(
+        &self,
+        order_id: Uuid,
+        status: &str,
+        note: Option<&str>,
+        actor: UserId,
+    ) -> Result<Order, ApiError> {
+        let mut transaction = self.pool.begin().await?;
+        insert_timeline(&mut transaction, order_id, status, note, Some(actor.0)).await?;
+        transaction.commit().await?;
+        self.admin_order(order_id).await
+    }
+
     async fn order_by_id(&self, order_id: Uuid) -> Result<Option<Order>, ApiError> {
         let row = sqlx::query(ORDER_SELECT_BY_ID)
             .bind(order_id)
@@ -407,6 +455,8 @@ fn parse_payment_provider(value: &str) -> Result<PaymentProvider, ApiError> {
     match value {
         "sslcommerz" => Ok(PaymentProvider::Sslcommerz),
         "bkash" => Ok(PaymentProvider::Bkash),
+        "stripe" => Ok(PaymentProvider::Stripe),
+        "nagad" => Ok(PaymentProvider::Nagad),
         other => Err(ApiError::Config(format!(
             "unknown payment provider: {other}"
         ))),
