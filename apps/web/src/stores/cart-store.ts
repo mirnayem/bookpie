@@ -50,7 +50,7 @@ export const useCartStore = create<CartUiState>()(
       open: () => set({ isOpen: true }),
       close: () => set({ isOpen: false }),
       addItem: (product, quantity = 1) => {
-        const safeQuantity = Math.max(1, quantity);
+        const safeQuantity = normalizeCartQuantity(quantity);
         const token = useAuthStore.getState().tokens?.accessToken;
         trackMetaPixelEvent("AddToCart", productToMetaPixelPayload(product, safeQuantity));
 
@@ -69,14 +69,14 @@ export const useCartStore = create<CartUiState>()(
           return { items: [...state.items, { product, quantity: safeQuantity }], isOpen: true };
         });
 
-        if (token) {
+        if (token && isApiBookId(product.id)) {
           addApiCartItem(token, product.id, safeQuantity)
             .then((cart) => set({ items: apiCartToLines(cart), isOpen: true }))
             .catch(() => undefined);
         }
       },
       updateQuantity: (productId, quantity) => {
-        const safeQuantity = Math.max(1, quantity);
+        const safeQuantity = normalizeCartQuantity(quantity);
         const token = useAuthStore.getState().tokens?.accessToken;
         const existingItem = get().items.find((item) => item.product.id === productId);
         const addedQuantity = existingItem ? safeQuantity - existingItem.quantity : 0;
@@ -88,7 +88,7 @@ export const useCartStore = create<CartUiState>()(
           items: state.items.map((item) => (item.product.id === productId ? { ...item, quantity: safeQuantity } : item)),
         }));
 
-        if (token) {
+        if (token && isApiBookId(productId)) {
           updateApiCartItem(token, productId, safeQuantity)
             .then((cart) => set({ items: apiCartToLines(cart) }))
             .catch(() => undefined);
@@ -98,7 +98,7 @@ export const useCartStore = create<CartUiState>()(
         const token = useAuthStore.getState().tokens?.accessToken;
         set((state) => ({ items: state.items.filter((item) => item.product.id !== productId) }));
 
-        if (token) {
+        if (token && isApiBookId(productId)) {
           removeApiCartItem(token, productId)
             .then((cart) => set({ items: apiCartToLines(cart) }))
             .catch(() => undefined);
@@ -118,9 +118,9 @@ export const useCartStore = create<CartUiState>()(
         const token = useAuthStore.getState().tokens?.accessToken;
         if (!token) return;
 
-        const localItems = get().items;
+        const localItems = get().items.filter((item) => isApiBookId(item.product.id));
         for (const item of localItems) {
-          await addApiCartItem(token, item.product.id, item.quantity).catch(() => undefined);
+          await addApiCartItem(token, item.product.id, normalizeCartQuantity(item.quantity)).catch(() => undefined);
         }
 
         const cart = await getApiCart(token);
@@ -185,4 +185,16 @@ function apiCartToLines(cart: Awaited<ReturnType<typeof getApiCart>>): CartLine[
     product: cartItemToProduct(item),
     quantity: item.quantity,
   }));
+}
+
+const API_BOOK_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function isApiBookId(productId: string) {
+  return API_BOOK_ID_PATTERN.test(productId);
+}
+
+function normalizeCartQuantity(quantity: number) {
+  if (!Number.isFinite(quantity)) return 1;
+
+  return Math.min(99, Math.max(1, Math.trunc(quantity)));
 }

@@ -39,7 +39,7 @@ function CartSessionSync() {
 
   useEffect(() => {
     if (!accessToken) return;
-    void syncCart();
+    void syncCart().catch(() => undefined);
   }, [accessToken, syncCart]);
 
   return null;
