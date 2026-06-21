@@ -8,9 +8,10 @@ import type { Product } from "@/types/storefront";
 type ProductCardProps = {
   product: Product;
   compact?: boolean;
+  priority?: boolean;
 };
 
-export function ProductCard({ product, compact = false }: ProductCardProps) {
+export function ProductCard({ product, compact = false, priority = false }: ProductCardProps) {
   return (
     <article className="group min-w-0">
       <Link href={`/products/${product.slug}`} className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
@@ -20,6 +21,7 @@ export function ProductCard({ product, compact = false }: ProductCardProps) {
             src={product.image}
             alt={product.title}
             fill
+            priority={priority}
             sizes={compact ? "100px" : "(max-width: 768px) 42vw, 180px"}
             className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
             unoptimized

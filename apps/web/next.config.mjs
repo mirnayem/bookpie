@@ -1,8 +1,7 @@
-import type { NextConfig } from "next";
-
 const cdnUrl = process.env.NEXT_PUBLIC_CDN_URL;
 
-const nextConfig: NextConfig = {
+/** @type {import("next").NextConfig} */
+const nextConfig = {
   assetPrefix: cdnUrl || undefined,
   images: {
     dangerouslyAllowSVG: true,

@@ -18,7 +18,7 @@ import {
   rankedLists,
   showcaseGroups,
 } from "@/data/storefront";
-import { buildProductSections, getStorefrontBooks, getStorefrontCategories } from "@/lib/storefront-api";
+import { buildProductSections, getStorefrontBooks, getStorefrontCategories, uniqueProducts } from "@/lib/storefront-api";
 
 export default async function HomePage() {
   const [apiProducts, apiCategories] = await Promise.all([getStorefrontBooks(), getStorefrontCategories()]);
@@ -29,7 +29,7 @@ export default async function HomePage() {
     id: "recommended",
     title: "Recommended for you",
     href: "/books/recommended",
-    products: [...islamic.products.slice(0, 4), ...history.products.slice(0, 4), ...newBooks.products.slice(0, 2)],
+    products: uniqueProducts([...islamic.products.slice(0, 4), ...history.products.slice(0, 4), ...newBooks.products.slice(0, 2)]),
   };
 
   return (
@@ -44,8 +44,8 @@ export default async function HomePage() {
             items: apiProducts.slice(index, index + 4).length ? apiProducts.slice(index, index + 4) : group.items,
           }))}
         />
-        <ProductRail section={newBooks} />
-        <FlashSaleSection products={[...trending.products, ...preOrder.products]} />
+        <ProductRail section={newBooks} prioritizeFirstProduct />
+        <FlashSaleSection products={uniqueProducts([...trending.products, ...preOrder.products])} />
         <ProductRail section={recommended} />
         <ProductRail section={safeFood} />
         {circularCategories.length ? <CircularCategoryRail title="ক্যাটাগরি" href="/categories" categories={circularCategories} /> : null}

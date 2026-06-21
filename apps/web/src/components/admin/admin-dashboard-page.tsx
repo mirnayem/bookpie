@@ -13,6 +13,7 @@ import { StockStatusBadge } from "@/components/admin/stock-status-badge";
 import { Button } from "@/components/ui/button";
 import { formatTaka } from "@/lib/format";
 import { adminApi } from "@/lib/admin/api";
+import { calculateStoredOrderTotals } from "@/lib/order-totals";
 import { useAuthStore } from "@/stores/auth-store";
 
 export function AdminDashboardPage() {
@@ -64,7 +65,7 @@ export function AdminDashboardPage() {
                 { key: "id", header: "Order", render: (order) => <Link className="font-semibold text-primary" href={`/admin/orders?order=${order.id}`}>{order.id.slice(0, 8)}</Link> },
                 { key: "status", header: "Status", render: (order) => <OrderStatusBadge status={order.status} /> },
                 { key: "payment", header: "Payment", render: (order) => <OrderStatusBadge status={order.paymentStatus} /> },
-                { key: "total", header: "Total", render: (order) => formatTaka(order.total) },
+                { key: "total", header: "Total", render: (order) => formatTaka(calculateStoredOrderTotals(order).total) },
               ]}
             />
           ) : (

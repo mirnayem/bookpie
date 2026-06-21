@@ -3,6 +3,7 @@
 import { Heart, ShoppingBag } from "lucide-react";
 import type { Product } from "@/types/storefront";
 import { Button } from "@/components/ui/button";
+import { useHydrated } from "@/lib/use-hydrated";
 import { useCartStore } from "@/stores/cart-store";
 
 type ProductActionsProps = {
@@ -11,9 +12,11 @@ type ProductActionsProps = {
 };
 
 export function ProductActions({ product, size = "default" }: ProductActionsProps) {
+  const hydrated = useHydrated();
   const addItem = useCartStore((state) => state.addItem);
   const toggleWishlist = useCartStore((state) => state.toggleWishlist);
-  const isWishlisted = useCartStore((state) => state.isWishlisted(product.id));
+  const storedIsWishlisted = useCartStore((state) => state.isWishlisted(product.id));
+  const isWishlisted = hydrated && storedIsWishlisted;
   const compact = size === "compact";
 
   return (

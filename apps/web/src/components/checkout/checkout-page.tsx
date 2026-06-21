@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { formatTaka } from "@/lib/format";
 import { cartLinesToMetaPixelPayload, trackMetaPixelEvent } from "@/lib/meta-pixel";
+import { calculateOrderTotals } from "@/lib/order-totals";
 import { createApiAddress, createApiOrder, validateApiCoupon } from "@/lib/storefront-api";
 import { useAuthStore } from "@/stores/auth-store";
 import { useCartStore } from "@/stores/cart-store";
@@ -94,9 +95,12 @@ export function CheckoutPage() {
   const currentDeliveryBase = watchedCity === "ঢাকা" ? 79 : 120;
   const currentSlotFee = deliverySlots.find((slot) => slot.value === watchedDeliverySlot)?.fee ?? 0;
   const currentDelivery = items.length && !freeShipping ? currentDeliveryBase + currentSlotFee : 0;
-  const taxableTotal = Math.max(payable - couponDiscount, 0);
-  const tax = Math.round(taxableTotal * 0.05);
-  const currentTotal = taxableTotal + currentDelivery + tax;
+  const totals = calculateOrderTotals({
+    subtotal,
+    productDiscount: discount,
+    couponDiscount,
+    shippingFee: currentDelivery,
+  });
 
   const selectSavedAddress = (addressId: "home" | "office") => {
     const address = savedAddresses.find((item) => item.id === addressId);
@@ -154,7 +158,7 @@ export function CheckoutPage() {
 
     try {
       await syncCart();
-      trackMetaPixelEvent("AddPaymentInfo", cartLinesToMetaPixelPayload(items, currentTotal));
+      trackMetaPixelEvent("AddPaymentInfo", cartLinesToMetaPixelPayload(items, totals.total));
       const address = await createApiAddress(tokens.accessToken, {
         label: values.addressPreset === "custom" ? "Checkout" : values.addressPreset,
         recipientName: values.name,
@@ -173,12 +177,12 @@ export function CheckoutPage() {
         paymentProvider: values.paymentMethod === "cash_on_delivery" ? null : values.paymentMethod,
         shippingFee: currentDelivery,
         couponDiscount,
-        taxTotal: tax,
+        taxTotal: totals.taxTotal,
       });
 
       setOrderNumber(order.id.slice(0, 8).toUpperCase());
       trackMetaPixelEvent("Purchase", {
-        ...cartLinesToMetaPixelPayload(items, currentTotal),
+        ...cartLinesToMetaPixelPayload(items, totals.total),
         order_id: order.id,
       });
       clearCart();
@@ -338,9 +342,9 @@ export function CheckoutPage() {
             <SummaryLine label="দাম" value={formatTaka(subtotal)} />
             <SummaryLine label="ছাড়" value={`-${formatTaka(discount)}`} />
             {couponDiscount ? <SummaryLine label={`কুপন (${appliedCoupon})`} value={`-${formatTaka(couponDiscount)}`} /> : null}
-            <SummaryLine label="ভ্যাট/ট্যাক্স" value={formatTaka(tax)} />
+            <SummaryLine label="ভ্যাট/ট্যাক্স" value={formatTaka(totals.taxTotal)} />
             <SummaryLine label="ডেলিভারি ফি" value={formatTaka(currentDelivery)} />
-            <SummaryLine label="সর্বমোট" value={formatTaka(currentTotal)} strong />
+            <SummaryLine label="সর্বমোট" value={formatTaka(totals.total)} strong />
           </div>
         </aside>
       </div>

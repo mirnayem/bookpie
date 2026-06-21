@@ -58,7 +58,7 @@ export async function storefrontRequest<T>(path: string, options: RequestOptions
 export async function getStorefrontBooks(limit = 100) {
   try {
     const response = await storefrontRequest<PaginatedResponse<Book>>(`/books?limit=${limit}&offset=0`);
-    return response.items.map(bookToProduct);
+    return uniqueProducts(response.items.map(bookToProduct), limit);
   } catch {
     return fallbackProducts;
   }
@@ -197,6 +197,6 @@ function categoryToStorefrontCategory(category: ApiCategory): Category {
   };
 }
 
-function uniqueProducts(products: Product[]) {
-  return Array.from(new Map(products.map((product) => [product.id, product])).values()).slice(0, 10);
+export function uniqueProducts(products: Product[], limit = 10) {
+  return Array.from(new Map(products.map((product) => [product.id, product])).values()).slice(0, limit);
 }

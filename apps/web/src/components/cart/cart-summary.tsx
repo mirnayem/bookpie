@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatTaka } from "@/lib/format";
 import { cartLinesToMetaPixelPayload, trackMetaPixelEvent } from "@/lib/meta-pixel";
+import { calculateOrderTotals } from "@/lib/order-totals";
 import { validateApiCoupon } from "@/lib/storefront-api";
 import type { CartLine } from "@/stores/cart-store";
 
@@ -25,7 +26,12 @@ export function CartSummary({ items, subtotal, discount, delivery, disabled = fa
   const [couponDiscount, setCouponDiscount] = useState(0);
   const [freeShipping, setFreeShipping] = useState(false);
   const deliveryFee = disabled || freeShipping ? 0 : delivery;
-  const total = Math.max(subtotal - discount - couponDiscount, 0) + deliveryFee;
+  const totals = calculateOrderTotals({
+    subtotal,
+    productDiscount: discount,
+    couponDiscount,
+    shippingFee: deliveryFee,
+  });
 
   const applyCoupon = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -67,9 +73,10 @@ export function CartSummary({ items, subtotal, discount, delivery, disabled = fa
         <SummaryLine label="দাম" value={formatTaka(subtotal)} />
         <SummaryLine label="ছাড়" value={`-${formatTaka(discount)}`} />
         {couponDiscount ? <SummaryLine label={`কুপন (${appliedCoupon})`} value={`-${formatTaka(couponDiscount)}`} /> : null}
-        <SummaryLine label="মোট দাম" value={formatTaka(subtotal - discount)} />
+        <SummaryLine label="মোট দাম" value={formatTaka(totals.taxableSubtotal)} />
+        <SummaryLine label="ভ্যাট/ট্যাক্স" value={formatTaka(totals.taxTotal)} />
         <SummaryLine label="ডেলিভারি ফি" value={formatTaka(deliveryFee)} />
-        <SummaryLine label="সর্বমোট" value={formatTaka(total)} strong />
+        <SummaryLine label="সর্বমোট" value={formatTaka(totals.total)} strong />
       </div>
       <form className="mt-7 flex gap-2" onSubmit={applyCoupon}>
         <Input value={couponCode} placeholder="Enter your coupon code" aria-label="Coupon code" onChange={(event) => setCouponCode(event.target.value)} />
@@ -86,7 +93,7 @@ export function CartSummary({ items, subtotal, discount, delivery, disabled = fa
           <Link
             href="/checkout"
             onClick={() => {
-              trackMetaPixelEvent("InitiateCheckout", cartLinesToMetaPixelPayload(items, total));
+              trackMetaPixelEvent("InitiateCheckout", cartLinesToMetaPixelPayload(items, totals.total));
             }}
           >
             Checkout

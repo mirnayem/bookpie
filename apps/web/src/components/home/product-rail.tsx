@@ -8,9 +8,10 @@ import type { ProductSection } from "@/types/storefront";
 
 type ProductRailProps = {
   section: ProductSection;
+  prioritizeFirstProduct?: boolean;
 };
 
-export function ProductRail({ section }: ProductRailProps) {
+export function ProductRail({ section, prioritizeFirstProduct = false }: ProductRailProps) {
   const railRef = useRef<HTMLDivElement>(null);
 
   const scrollByPage = (direction: number) => {
@@ -32,8 +33,8 @@ export function ProductRail({ section }: ProductRailProps) {
           tabIndex={0}
           aria-label={`${section.title} product carousel`}
         >
-          {section.products.map((product) => (
-            <ProductCard key={product.id} product={product} />
+          {section.products.map((product, index) => (
+            <ProductCard key={product.id} product={product} priority={prioritizeFirstProduct && index === 0} />
           ))}
         </div>
       </div>

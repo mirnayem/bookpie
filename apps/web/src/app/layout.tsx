@@ -7,6 +7,9 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "BookPie | Online Book Shop",
   description: "A reusable Next.js bookstore storefront inspired by modern Bangladeshi ecommerce.",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

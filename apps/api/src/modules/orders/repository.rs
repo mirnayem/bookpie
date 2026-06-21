@@ -8,6 +8,8 @@ use super::model::{
     OrderItem, OrderStatus, PaymentProvider, PaymentStatus,
 };
 
+const VAT_RATE_PERCENT: i32 = 5;
+
 #[derive(Clone)]
 pub struct OrderRepository {
     pool: PgPool,
@@ -69,9 +71,17 @@ impl OrderRepository {
         }
 
         let shipping_fee = payload.shipping_fee.unwrap_or_default();
-        let tax_total = payload.tax_total.unwrap_or_default();
         let discount_total = product_discount + coupon_discount;
-        let total = (subtotal - discount_total + shipping_fee + tax_total).max(0);
+        let taxable_subtotal = (subtotal - discount_total).max(0);
+        let tax_total = calculate_tax_total(taxable_subtotal);
+        if let Some(requested_tax_total) = payload.tax_total
+            && requested_tax_total != tax_total
+        {
+            return Err(ApiError::Validation(format!(
+                "taxTotal must match calculated tax total {tax_total}"
+            )));
+        }
+        let total = taxable_subtotal + shipping_fee + tax_total;
         let provider = payload
             .payment_provider
             .as_ref()
@@ -477,6 +487,10 @@ fn order_item_from_row(row: PgRow) -> OrderItem {
         unit_price: row.get("unit_price"),
         line_total: row.get("line_total"),
     }
+}
+
+fn calculate_tax_total(taxable_subtotal: i32) -> i32 {
+    ((taxable_subtotal.max(0) * VAT_RATE_PERCENT) + 50) / 100
 }
 
 fn delivery_from_row(row: PgRow) -> DeliveryAssignment {

@@ -17,6 +17,7 @@ import { Modal } from "@/components/ui/modal";
 import { Select } from "@/components/ui/select";
 import { formatTaka } from "@/lib/format";
 import { adminApi } from "@/lib/admin/api";
+import { calculateStoredOrderTotals } from "@/lib/order-totals";
 import { useAuthStore } from "@/stores/auth-store";
 
 type OrdersAdminPageProps = {
@@ -83,7 +84,7 @@ export function OrdersAdminPage({ deliveryOnly = false }: OrdersAdminPageProps) 
             { key: "payment", header: "Payment", render: (order) => <OrderStatusBadge status={order.paymentStatus} /> },
             { key: "delivery", header: "Delivery", render: (order) => order.delivery ? <OrderStatusBadge status={order.delivery.status} /> : <span className="text-muted-foreground">Unassigned</span> },
             { key: "items", header: "Items", render: (order) => order.items.length },
-            { key: "total", header: "Total", render: (order) => formatTaka(order.total) },
+            { key: "total", header: "Total", render: (order) => formatTaka(orderTotals(order).total) },
             {
               key: "actions",
               header: "Actions",
@@ -140,9 +141,10 @@ export function OrdersAdminPage({ deliveryOnly = false }: OrdersAdminPageProps) 
                 <div className="space-y-2 text-sm">
                   <p className="flex justify-between"><span>Subtotal</span><span>{formatTaka(selectedOrder.subtotal)}</span></p>
                   <p className="flex justify-between"><span>Discount</span><span>-{formatTaka(selectedOrder.discountTotal)}</span></p>
+                  <p className="flex justify-between"><span>Payable subtotal</span><span>{formatTaka(orderTotals(selectedOrder).taxableSubtotal)}</span></p>
                   <p className="flex justify-between"><span>Tax/VAT</span><span>{formatTaka(selectedOrder.taxTotal)}</span></p>
                   <p className="flex justify-between"><span>Delivery fee</span><span>{formatTaka(selectedOrder.shippingFee)}</span></p>
-                  <p className="flex justify-between border-t pt-2 font-semibold"><span>Total</span><span>{formatTaka(selectedOrder.total)}</span></p>
+                  <p className="flex justify-between border-t pt-2 font-semibold"><span>Total</span><span>{formatTaka(orderTotals(selectedOrder).total)}</span></p>
                 </div>
               </div>
               <div className="rounded-lg border p-4">
@@ -162,4 +164,8 @@ export function OrdersAdminPage({ deliveryOnly = false }: OrdersAdminPageProps) 
       </Modal>
     </div>
   );
+}
+
+function orderTotals(order: Order) {
+  return calculateStoredOrderTotals(order);
 }
