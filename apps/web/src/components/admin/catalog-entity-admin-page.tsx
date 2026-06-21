@@ -7,6 +7,7 @@ import { useMemo, useState } from "react";
 
 import { AdminConfirmDialog } from "@/components/admin/admin-confirm-dialog";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { AdminPagination } from "@/components/admin/admin-pagination";
 import { AdminState } from "@/components/admin/admin-state";
 import { AdminTable } from "@/components/admin/admin-table";
 import { EntityForm } from "@/components/admin/entity-form";
@@ -27,14 +28,14 @@ type CatalogEntityAdminPageProps = {
 };
 
 const entityApi = {
-  authors: { load: adminApi.authors, create: adminApi.createAuthor, update: adminApi.updateAuthor, remove: adminApi.deleteAuthor },
-  publishers: { load: adminApi.publishers, create: adminApi.createPublisher, update: adminApi.updatePublisher, remove: adminApi.deletePublisher },
-  categories: { load: adminApi.categories, create: adminApi.createCategory, update: adminApi.updateCategory, remove: adminApi.deleteCategory },
-  brands: { load: adminApi.brands, create: adminApi.createBrand, update: adminApi.updateBrand, remove: adminApi.deleteBrand },
+  authors: { load: adminApi.adminAuthors, create: adminApi.createAuthor, update: adminApi.updateAuthor, remove: adminApi.deleteAuthor },
+  publishers: { load: adminApi.adminPublishers, create: adminApi.createPublisher, update: adminApi.updatePublisher, remove: adminApi.deletePublisher },
+  categories: { load: adminApi.adminCategories, create: adminApi.createCategory, update: adminApi.updateCategory, remove: adminApi.deleteCategory },
+  brands: { load: adminApi.adminBrands, create: adminApi.createBrand, update: adminApi.updateBrand, remove: adminApi.deleteBrand },
 } satisfies Record<
   CatalogEntityType,
   {
-    load: (token: string | null) => Promise<CatalogEntity[]>;
+    load: (token: string | null, params?: { limit?: number; offset?: number; search?: string }) => Promise<{ items: CatalogEntity[]; pagination: import("@bookpie/shared").PaginationMeta }>;
     create: (token: string | null, payload: UpsertAuthorRequest) => Promise<CatalogEntity>;
     update: (token: string | null, id: string, payload: UpsertAuthorRequest) => Promise<CatalogEntity>;
     remove: (token: string | null, id: string) => Promise<void>;
@@ -46,11 +47,18 @@ export function CatalogEntityAdminPage({ title, description, entityType }: Catal
   const token = useAuthStore((state) => state.tokens?.accessToken ?? null);
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
   const debouncedSearch = useDebounce(search);
+  const serverSearch = debouncedSearch.trim().length >= 3 ? debouncedSearch.trim() : undefined;
+  const limit = 20;
   const [formOpen, setFormOpen] = useState(false);
   const [editingEntity, setEditingEntity] = useState<CatalogEntity | null>(null);
   const [deleteEntity, setDeleteEntity] = useState<CatalogEntity | null>(null);
-  const listQuery = useQuery({ queryKey: ["admin", entityType], queryFn: () => load(token), enabled: Boolean(token) });
+  const listQuery = useQuery({
+    queryKey: ["admin", entityType, serverSearch, page],
+    queryFn: () => load(token, { limit, offset: (page - 1) * limit, search: serverSearch }),
+    enabled: Boolean(token) && debouncedSearch.trim().length !== 1 && debouncedSearch.trim().length !== 2,
+  });
   const saveMutation = useMutation({
     mutationFn: (payload: UpsertAuthorRequest) => (editingEntity ? update(token, editingEntity.id, payload) : create(token, payload)),
     onSuccess: async () => {
@@ -67,12 +75,8 @@ export function CatalogEntityAdminPage({ title, description, entityType }: Catal
     },
   });
   const rows = useMemo(() => {
-    const values = listQuery.data ?? [];
-    if (debouncedSearch.trim().length > 0 && debouncedSearch.trim().length < 3) return values;
-    if (debouncedSearch.trim().length < 3) return values;
-    const needle = debouncedSearch.toLowerCase();
-    return values.filter((entity) => `${entity.name} ${entity.slug}`.toLowerCase().includes(needle));
-  }, [debouncedSearch, listQuery.data]);
+    return listQuery.data?.items ?? [];
+  }, [listQuery.data?.items]);
 
   if (listQuery.isError) {
     return <AdminState variant="error" title={`${title} failed to load`} description={listQuery.error.message} actionLabel="Retry" onAction={() => listQuery.refetch()} />;
@@ -90,7 +94,15 @@ export function CatalogEntityAdminPage({ title, description, entityType }: Catal
           </Button>
         }
       />
-      <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={`Search ${title.toLowerCase()} by name or slug`} aria-label={`Search ${title}`} />
+      <Input
+        value={search}
+        onChange={(event) => {
+          setSearch(event.target.value);
+          setPage(1);
+        }}
+        placeholder={`Search ${title.toLowerCase()} by name or slug`}
+        aria-label={`Search ${title}`}
+      />
       {rows.length ? (
         <AdminTable
           rows={rows}
@@ -120,6 +132,7 @@ export function CatalogEntityAdminPage({ title, description, entityType }: Catal
       ) : (
         <AdminState title={`No ${title.toLowerCase()} found`} description="Create a new record or adjust the search." />
       )}
+      <AdminPagination pagination={listQuery.data?.pagination} isFetching={listQuery.isFetching} onPageChange={setPage} />
       <Modal open={formOpen} title={editingEntity ? `Edit ${title}` : `Create ${title}`} onOpenChange={setFormOpen}>
         <EntityForm key={editingEntity?.id ?? "new"} defaultValues={editingEntity ? { name: editingEntity.name, slug: editingEntity.slug } : undefined} busy={saveMutation.isPending} onSubmit={(payload) => saveMutation.mutate(payload)} />
         {saveMutation.error ? <p className="mt-4 text-sm text-primary">{saveMutation.error.message}</p> : null}

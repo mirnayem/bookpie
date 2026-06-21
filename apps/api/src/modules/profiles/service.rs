@@ -2,7 +2,7 @@ use sqlx::PgPool;
 use uuid::Uuid;
 use validator::Validate;
 
-use crate::{error::ApiError, models::ids::UserId};
+use crate::{error::ApiError, models::ids::UserId, response::PaginatedResponse};
 
 use super::{
     model::{
@@ -143,10 +143,16 @@ impl ProfileService {
     pub async fn list_customers(
         &self,
         query: CustomerListQuery,
-    ) -> Result<Vec<AdminCustomerSummary>, ApiError> {
-        self.repository
-            .list_customers(query.limit(), query.offset(), query.search())
-            .await
+    ) -> Result<PaginatedResponse<AdminCustomerSummary>, ApiError> {
+        let limit = query.limit();
+        let offset = query.offset();
+        let search = query.search();
+        let total = self.repository.count_customers(search.clone()).await?;
+        let customers = self
+            .repository
+            .list_customers(limit, offset, search)
+            .await?;
+        Ok(PaginatedResponse::new(customers, total, limit, offset))
     }
 }
 

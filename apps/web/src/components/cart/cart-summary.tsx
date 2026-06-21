@@ -6,16 +6,19 @@ import { SummaryLine } from "@/components/cart/summary-line";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatTaka } from "@/lib/format";
+import { cartLinesToMetaPixelPayload, trackMetaPixelEvent } from "@/lib/meta-pixel";
 import { validateApiCoupon } from "@/lib/storefront-api";
+import type { CartLine } from "@/stores/cart-store";
 
 type CartSummaryProps = {
+  items: CartLine[];
   subtotal: number;
   discount: number;
   delivery: number;
   disabled?: boolean;
 };
 
-export function CartSummary({ subtotal, discount, delivery, disabled = false }: CartSummaryProps) {
+export function CartSummary({ items, subtotal, discount, delivery, disabled = false }: CartSummaryProps) {
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
   const [couponError, setCouponError] = useState<string | null>(null);
@@ -80,7 +83,14 @@ export function CartSummary({ subtotal, discount, delivery, disabled = false }: 
         </Button>
       ) : (
         <Button asChild className="mt-6 w-full">
-          <Link href="/checkout">Checkout</Link>
+          <Link
+            href="/checkout"
+            onClick={() => {
+              trackMetaPixelEvent("InitiateCheckout", cartLinesToMetaPixelPayload(items, total));
+            }}
+          >
+            Checkout
+          </Link>
         </Button>
       )}
     </aside>

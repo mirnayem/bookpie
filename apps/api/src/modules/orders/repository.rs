@@ -155,6 +155,21 @@ impl OrderRepository {
         rows_to_orders(&self.pool, rows).await
     }
 
+    pub async fn count_admin_orders(&self, status: Option<OrderStatus>) -> Result<i64, ApiError> {
+        let row = if let Some(status) = status {
+            sqlx::query("SELECT COUNT(*)::BIGINT AS total FROM orders WHERE status = $1")
+                .bind(status.as_str())
+                .fetch_one(&self.pool)
+                .await?
+        } else {
+            sqlx::query("SELECT COUNT(*)::BIGINT AS total FROM orders")
+                .fetch_one(&self.pool)
+                .await?
+        };
+
+        Ok(row.get("total"))
+    }
+
     pub async fn admin_order(&self, order_id: Uuid) -> Result<Order, ApiError> {
         self.order_by_id(order_id).await?.ok_or(ApiError::NotFound)
     }

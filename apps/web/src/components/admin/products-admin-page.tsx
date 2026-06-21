@@ -9,6 +9,7 @@ import { useMemo, useState } from "react";
 import { AdminAvatar } from "@/components/admin/admin-avatar";
 import { AdminConfirmDialog } from "@/components/admin/admin-confirm-dialog";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { AdminPagination } from "@/components/admin/admin-pagination";
 import { AdminState } from "@/components/admin/admin-state";
 import { AdminTable } from "@/components/admin/admin-table";
 import { ProductForm } from "@/components/admin/product-form";
@@ -55,15 +56,14 @@ export function ProductsAdminPage() {
     },
   });
   const books = useMemo(() => {
-    const rows = booksQuery.data ?? [];
-    const filtered = debouncedSearch.trim().length < 3 ? rows : rows.filter((book) => `${book.title} ${book.slug} ${book.author.name} ${book.publisher.name}`.toLowerCase().includes(debouncedSearch.toLowerCase()));
-    return [...filtered].sort((first, second) => {
+    const rows = booksQuery.data?.items ?? [];
+    return [...rows].sort((first, second) => {
       if (sort === "title") return first.title.localeCompare(second.title);
       if (sort === "stock") return first.stock - second.stock;
       if (sort === "price") return first.salePrice - second.salePrice;
       return 0;
     });
-  }, [booksQuery.data, debouncedSearch, sort]);
+  }, [booksQuery.data?.items, sort]);
 
   if (booksQuery.isError) {
     return <AdminState variant="error" title="Products failed to load" description={booksQuery.error.message} actionLabel="Retry" onAction={() => booksQuery.refetch()} />;
@@ -146,17 +146,7 @@ export function ProductsAdminPage() {
       ) : (
         <AdminState title="No products found" description="Create your first product or adjust the search." />
       )}
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-muted-foreground">Page {page}</p>
-        <div className="flex gap-2">
-          <Button type="button" variant="outline" disabled={page === 1 || booksQuery.isFetching} onClick={() => setPage((value) => Math.max(1, value - 1))}>
-            Previous
-          </Button>
-          <Button type="button" variant="outline" disabled={(booksQuery.data?.length ?? 0) < limit || booksQuery.isFetching} onClick={() => setPage((value) => value + 1)}>
-            Next
-          </Button>
-        </div>
-      </div>
+      <AdminPagination pagination={booksQuery.data?.pagination} isFetching={booksQuery.isFetching} onPageChange={setPage} />
       <Modal open={formOpen} title={editingBook ? "Edit product" : "Create product"} onOpenChange={setFormOpen} className="max-w-4xl">
         <ProductForm
           key={editingBook?.id ?? "new"}

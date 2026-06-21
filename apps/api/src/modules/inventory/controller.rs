@@ -7,7 +7,10 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::{
-    error::ApiError, middleware::auth::CurrentUser, response::ApiResponse, state::AppState,
+    error::ApiError,
+    middleware::auth::CurrentUser,
+    response::{ApiResponse, PaginatedResponse},
+    state::AppState,
 };
 
 use super::{
@@ -43,7 +46,7 @@ async fn list_inventory(
     State(state): State<AppState>,
     user: CurrentUser,
     Query(query): Query<InventoryListQuery>,
-) -> Result<Json<ApiResponse<Vec<InventoryItem>>>, ApiError> {
+) -> Result<Json<ApiResponse<PaginatedResponse<InventoryItem>>>, ApiError> {
     user.require_admin()?;
     let service = InventoryService::new(state.pg_pool.clone());
     let inventory = service.list_inventory(query).await?;

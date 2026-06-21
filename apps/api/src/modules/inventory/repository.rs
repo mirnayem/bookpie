@@ -80,6 +80,69 @@ impl InventoryRepository {
         Ok(rows.into_iter().map(inventory_item_from_row).collect())
     }
 
+    pub async fn count_inventory(
+        &self,
+        search: Option<String>,
+        stock_status: Option<&str>,
+    ) -> Result<i64, ApiError> {
+        let row =
+            match (search, stock_status) {
+                (Some(search), Some("low")) => {
+                    sqlx::query(
+                        r#"
+                    SELECT COUNT(*)::BIGINT AS total
+                    FROM books
+                    WHERE (title ILIKE $1 OR slug ILIKE $1) AND stock > 0 AND stock <= 5
+                    "#,
+                    )
+                    .bind(search)
+                    .fetch_one(&self.pool)
+                    .await?
+                }
+                (Some(search), Some("out")) => {
+                    sqlx::query(
+                        r#"
+                    SELECT COUNT(*)::BIGINT AS total
+                    FROM books
+                    WHERE (title ILIKE $1 OR slug ILIKE $1) AND stock = 0
+                    "#,
+                    )
+                    .bind(search)
+                    .fetch_one(&self.pool)
+                    .await?
+                }
+                (Some(search), _) => {
+                    sqlx::query(
+                        r#"
+                    SELECT COUNT(*)::BIGINT AS total
+                    FROM books
+                    WHERE title ILIKE $1 OR slug ILIKE $1
+                    "#,
+                    )
+                    .bind(search)
+                    .fetch_one(&self.pool)
+                    .await?
+                }
+                (None, Some("low")) => sqlx::query(
+                    "SELECT COUNT(*)::BIGINT AS total FROM books WHERE stock > 0 AND stock <= 5",
+                )
+                .fetch_one(&self.pool)
+                .await?,
+                (None, Some("out")) => {
+                    sqlx::query("SELECT COUNT(*)::BIGINT AS total FROM books WHERE stock = 0")
+                        .fetch_one(&self.pool)
+                        .await?
+                }
+                (None, _) => {
+                    sqlx::query("SELECT COUNT(*)::BIGINT AS total FROM books")
+                        .fetch_one(&self.pool)
+                        .await?
+                }
+            };
+
+        Ok(row.get("total"))
+    }
+
     pub async fn update_stock(
         &self,
         book_id: Uuid,

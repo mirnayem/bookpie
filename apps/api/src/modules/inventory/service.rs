@@ -2,7 +2,7 @@ use sqlx::PgPool;
 use uuid::Uuid;
 use validator::Validate;
 
-use crate::{error::ApiError, models::ids::UserId};
+use crate::{error::ApiError, models::ids::UserId, response::PaginatedResponse};
 
 use super::{
     model::{
@@ -28,15 +28,21 @@ impl InventoryService {
     pub async fn list_inventory(
         &self,
         query: InventoryListQuery,
-    ) -> Result<Vec<InventoryItem>, ApiError> {
-        self.repository
-            .list_inventory(
-                query.limit(),
-                query.offset(),
-                query.search(),
-                query.stock_status(),
-            )
-            .await
+    ) -> Result<PaginatedResponse<InventoryItem>, ApiError> {
+        let limit = query.limit();
+        let offset = query.offset();
+        let search = query.search();
+        let stock_status = query.stock_status();
+        let total = self
+            .repository
+            .count_inventory(search.clone(), stock_status)
+            .await?;
+        let inventory = self
+            .repository
+            .list_inventory(limit, offset, search, stock_status)
+            .await?;
+
+        Ok(PaginatedResponse::new(inventory, total, limit, offset))
     }
 
     pub async fn update_stock(

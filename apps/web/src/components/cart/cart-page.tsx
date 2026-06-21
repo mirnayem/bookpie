@@ -52,7 +52,7 @@ export function CartPage() {
             </div>
           )}
         </section>
-        <CartSummary subtotal={subtotal} discount={subtotal - payable} delivery={79} disabled={!items.length} />
+        <CartSummary items={items} subtotal={subtotal} discount={subtotal - payable} delivery={79} disabled={!items.length} />
       </div>
     </main>
   );

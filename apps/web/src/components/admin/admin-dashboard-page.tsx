@@ -26,7 +26,8 @@ export function AdminDashboardPage() {
   }
 
   const summary = summaryQuery.data;
-  const lowStock = (inventoryQuery.data ?? []).filter((item) => item.stock <= 5);
+  const recentOrders = ordersQuery.data?.items ?? [];
+  const lowStock = (inventoryQuery.data?.items ?? []).filter((item) => item.stock <= 5);
 
   return (
     <div className="space-y-6">
@@ -55,9 +56,9 @@ export function AdminDashboardPage() {
       <section className="grid min-w-0 gap-6 xl:grid-cols-2">
         <div className="min-w-0 space-y-3">
           <AdminPageHeader title="Recent orders" action={<Button asChild variant="link"><Link href="/admin/orders">View all</Link></Button>} />
-          {ordersQuery.data?.length ? (
+          {recentOrders.length ? (
             <AdminTable
-              rows={ordersQuery.data}
+              rows={recentOrders}
               getRowKey={(order) => order.id}
               columns={[
                 { key: "id", header: "Order", render: (order) => <Link className="font-semibold text-primary" href={`/admin/orders?order=${order.id}`}>{order.id.slice(0, 8)}</Link> },

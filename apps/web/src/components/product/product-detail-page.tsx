@@ -1,5 +1,8 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect } from "react";
 import { FrequentlyBoughtTogether } from "@/components/product/frequently-bought-together";
 import { ProductActions } from "@/components/product/product-actions";
 import { ProductSampleButton } from "@/components/product/product-sample-button";
@@ -9,6 +12,7 @@ import { ProductSuggestionCard } from "@/components/product/product-suggestion-c
 import { RatingBars } from "@/components/product/rating-bars";
 import { RelatedProducts } from "@/components/product/related-products";
 import { formatTaka } from "@/lib/format";
+import { productToMetaPixelPayload, trackMetaPixelEvent } from "@/lib/meta-pixel";
 import type { Product, PromoBanner } from "@/types/storefront";
 
 type ProductDetailPageProps = {
@@ -18,6 +22,10 @@ type ProductDetailPageProps = {
 };
 
 export function ProductDetailPage({ product, suggestions, promos }: ProductDetailPageProps) {
+  useEffect(() => {
+    trackMetaPixelEvent("ViewContent", productToMetaPixelPayload(product));
+  }, [product]);
+
   return (
     <main className="container-page py-8">
       <div className="mb-6 text-sm text-muted-foreground">

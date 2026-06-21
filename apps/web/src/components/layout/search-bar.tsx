@@ -3,6 +3,7 @@
 import { Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
+import { trackMetaPixelEvent } from "@/lib/meta-pixel";
 import { cn } from "@/lib/utils";
 
 type SearchBarProps = {
@@ -20,7 +21,10 @@ export function SearchBar({ className }: SearchBarProps) {
         event.preventDefault();
         const formData = new FormData(event.currentTarget);
         const query = String(formData.get("q") ?? "").trim();
-        if (query) router.push(`/search?q=${encodeURIComponent(query)}`);
+        if (query) {
+          trackMetaPixelEvent("Search", { search_string: query });
+          router.push(`/search?q=${encodeURIComponent(query)}`);
+        }
       }}
     >
       <Input

@@ -6,6 +6,7 @@ import { Eye, Truck } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { AdminPagination } from "@/components/admin/admin-pagination";
 import { AdminState } from "@/components/admin/admin-state";
 import { AdminTable } from "@/components/admin/admin-table";
 import { DeliveryForm } from "@/components/admin/delivery-form";
@@ -28,16 +29,18 @@ export function OrdersAdminPage({ deliveryOnly = false }: OrdersAdminPageProps) 
   const token = useAuthStore((state) => state.tokens?.accessToken ?? null);
   const queryClient = useQueryClient();
   const [status, setStatus] = useState<OrderStatus | "all">(deliveryOnly ? "confirmed" : "all");
+  const [page, setPage] = useState(1);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const limit = 20;
   const ordersQuery = useQuery({
-    queryKey: ["admin", "orders", status],
-    queryFn: () => adminApi.orders(token, { limit: 100, offset: 0, status: status === "all" ? undefined : status }),
+    queryKey: ["admin", "orders", status, page],
+    queryFn: () => adminApi.orders(token, { limit, offset: (page - 1) * limit, status: status === "all" ? undefined : status }),
     enabled: Boolean(token),
   });
   const rows = useMemo(() => {
-    const orders = ordersQuery.data ?? [];
+    const orders = ordersQuery.data?.items ?? [];
     return deliveryOnly ? orders.filter((order) => order.status !== "delivered" && order.status !== "cancelled") : orders;
-  }, [deliveryOnly, ordersQuery.data]);
+  }, [deliveryOnly, ordersQuery.data?.items]);
   const statusMutation = useMutation({
     mutationFn: ({ order, payload }: { order: Order; payload: UpdateOrderStatusRequest }) => adminApi.updateOrderStatus(token, order.id, payload),
     onSuccess: async (order) => {
@@ -61,7 +64,14 @@ export function OrdersAdminPage({ deliveryOnly = false }: OrdersAdminPageProps) 
     <div className="space-y-6">
       <AdminPageHeader title={deliveryOnly ? "Delivery" : "Orders"} description={deliveryOnly ? "Assign and update delivery agents for active orders." : "Review orders, update statuses, and manage delivery assignments."} />
       <div className="max-w-xs">
-        <Select value={status} onChange={(event) => setStatus(event.target.value as OrderStatus | "all")} options={statuses.map((value) => ({ label: value.replaceAll("_", " "), value }))} />
+        <Select
+          value={status}
+          onChange={(event) => {
+            setStatus(event.target.value as OrderStatus | "all");
+            setPage(1);
+          }}
+          options={statuses.map((value) => ({ label: value.replaceAll("_", " "), value }))}
+        />
       </div>
       {rows.length ? (
         <AdminTable
@@ -90,6 +100,7 @@ export function OrdersAdminPage({ deliveryOnly = false }: OrdersAdminPageProps) 
       ) : (
         <AdminState title="No orders found" description="Orders matching the selected status will appear here." />
       )}
+      <AdminPagination pagination={ordersQuery.data?.pagination} isFetching={ordersQuery.isFetching} onPageChange={setPage} />
       <Modal open={Boolean(selectedOrder)} title={selectedOrder ? `Order #${selectedOrder.id.slice(0, 8)}` : "Order"} onOpenChange={(open) => !open && setSelectedOrder(null)} className="max-w-5xl">
         {selectedOrder ? (
           <div className="grid gap-6 lg:grid-cols-[1fr_360px]">

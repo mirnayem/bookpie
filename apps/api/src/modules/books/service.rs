@@ -2,7 +2,7 @@ use sqlx::PgPool;
 use uuid::Uuid;
 use validator::Validate;
 
-use crate::error::ApiError;
+use crate::{error::ApiError, response::PaginatedResponse};
 
 use super::{
     model::{
@@ -24,10 +24,13 @@ impl CatalogService {
         }
     }
 
-    pub async fn list_books(&self, query: ListQuery) -> Result<Vec<Book>, ApiError> {
-        self.repository
-            .list_books(query.limit(), query.offset(), query.search())
-            .await
+    pub async fn list_books(&self, query: ListQuery) -> Result<PaginatedResponse<Book>, ApiError> {
+        let limit = query.limit();
+        let offset = query.offset();
+        let search = query.search();
+        let total = self.repository.count_books(search.clone()).await?;
+        let books = self.repository.list_books(limit, offset, search).await?;
+        Ok(PaginatedResponse::new(books, total, limit, offset))
     }
 
     pub async fn list_books_for_index(&self) -> Result<Vec<Book>, ApiError> {
@@ -69,6 +72,21 @@ impl CatalogService {
         self.repository.list_authors().await
     }
 
+    pub async fn list_admin_authors(
+        &self,
+        query: ListQuery,
+    ) -> Result<PaginatedResponse<Author>, ApiError> {
+        let limit = query.limit();
+        let offset = query.offset();
+        let search = query.search();
+        let total = self.repository.count_authors(search.clone()).await?;
+        let authors = self
+            .repository
+            .list_authors_paginated(limit, offset, search)
+            .await?;
+        Ok(PaginatedResponse::new(authors, total, limit, offset))
+    }
+
     pub async fn create_author(&self, payload: UpsertAuthorRequest) -> Result<Author, ApiError> {
         payload
             .validate()
@@ -99,6 +117,21 @@ impl CatalogService {
 
     pub async fn list_publishers(&self) -> Result<Vec<Publisher>, ApiError> {
         self.repository.list_publishers().await
+    }
+
+    pub async fn list_admin_publishers(
+        &self,
+        query: ListQuery,
+    ) -> Result<PaginatedResponse<Publisher>, ApiError> {
+        let limit = query.limit();
+        let offset = query.offset();
+        let search = query.search();
+        let total = self.repository.count_publishers(search.clone()).await?;
+        let publishers = self
+            .repository
+            .list_publishers_paginated(limit, offset, search)
+            .await?;
+        Ok(PaginatedResponse::new(publishers, total, limit, offset))
     }
 
     pub async fn create_publisher(
@@ -136,6 +169,21 @@ impl CatalogService {
         self.repository.list_brands().await
     }
 
+    pub async fn list_admin_brands(
+        &self,
+        query: ListQuery,
+    ) -> Result<PaginatedResponse<Brand>, ApiError> {
+        let limit = query.limit();
+        let offset = query.offset();
+        let search = query.search();
+        let total = self.repository.count_brands(search.clone()).await?;
+        let brands = self
+            .repository
+            .list_brands_paginated(limit, offset, search)
+            .await?;
+        Ok(PaginatedResponse::new(brands, total, limit, offset))
+    }
+
     pub async fn create_brand(&self, payload: UpsertBrandRequest) -> Result<Brand, ApiError> {
         payload
             .validate()
@@ -166,6 +214,21 @@ impl CatalogService {
 
     pub async fn list_categories(&self) -> Result<Vec<Category>, ApiError> {
         self.repository.list_categories().await
+    }
+
+    pub async fn list_admin_categories(
+        &self,
+        query: ListQuery,
+    ) -> Result<PaginatedResponse<Category>, ApiError> {
+        let limit = query.limit();
+        let offset = query.offset();
+        let search = query.search();
+        let total = self.repository.count_categories(search.clone()).await?;
+        let categories = self
+            .repository
+            .list_categories_paginated(limit, offset, search)
+            .await?;
+        Ok(PaginatedResponse::new(categories, total, limit, offset))
     }
 
     pub async fn create_category(

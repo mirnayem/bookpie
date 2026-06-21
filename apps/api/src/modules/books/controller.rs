@@ -6,7 +6,10 @@ use axum::{
 use uuid::Uuid;
 
 use crate::{
-    error::ApiError, middleware::auth::CurrentUser, response::ApiResponse, state::AppState,
+    error::ApiError,
+    middleware::auth::CurrentUser,
+    response::{ApiResponse, PaginatedResponse},
+    state::AppState,
 };
 
 use super::{
@@ -28,22 +31,31 @@ pub fn catalog_router() -> Router<AppState> {
         .route("/categories", get(list_categories))
         .route("/admin/books", post(create_book))
         .route("/admin/books/{id}", patch(update_book).delete(delete_book))
-        .route("/admin/authors", post(create_author))
+        .route(
+            "/admin/authors",
+            get(list_admin_authors).post(create_author),
+        )
         .route(
             "/admin/authors/{id}",
             patch(update_author).delete(delete_author),
         )
-        .route("/admin/publishers", post(create_publisher))
+        .route(
+            "/admin/publishers",
+            get(list_admin_publishers).post(create_publisher),
+        )
         .route(
             "/admin/publishers/{id}",
             patch(update_publisher).delete(delete_publisher),
         )
-        .route("/admin/brands", post(create_brand))
+        .route("/admin/brands", get(list_admin_brands).post(create_brand))
         .route(
             "/admin/brands/{id}",
             patch(update_brand).delete(delete_brand),
         )
-        .route("/admin/categories", post(create_category))
+        .route(
+            "/admin/categories",
+            get(list_admin_categories).post(create_category),
+        )
         .route(
             "/admin/categories/{id}",
             patch(update_category).delete(delete_category),
@@ -53,7 +65,7 @@ pub fn catalog_router() -> Router<AppState> {
 async fn list_books(
     State(state): State<AppState>,
     Query(query): Query<ListQuery>,
-) -> Result<Json<ApiResponse<Vec<Book>>>, ApiError> {
+) -> Result<Json<ApiResponse<PaginatedResponse<Book>>>, ApiError> {
     let service = CatalogService::new(state.pg_pool.clone());
     let books = service.list_books(query).await?;
 
@@ -122,6 +134,19 @@ async fn list_authors(
     Ok(Json(ApiResponse::ok(authors)))
 }
 
+async fn list_admin_authors(
+    State(state): State<AppState>,
+    user: CurrentUser,
+    Query(query): Query<ListQuery>,
+) -> Result<Json<ApiResponse<PaginatedResponse<Author>>>, ApiError> {
+    user.require_admin()?;
+
+    let service = CatalogService::new(state.pg_pool.clone());
+    let authors = service.list_admin_authors(query).await?;
+
+    Ok(Json(ApiResponse::ok(authors)))
+}
+
 async fn create_author(
     State(state): State<AppState>,
     user: CurrentUser,
@@ -167,6 +192,19 @@ async fn list_publishers(
 ) -> Result<Json<ApiResponse<Vec<Publisher>>>, ApiError> {
     let service = CatalogService::new(state.pg_pool.clone());
     let publishers = service.list_publishers().await?;
+
+    Ok(Json(ApiResponse::ok(publishers)))
+}
+
+async fn list_admin_publishers(
+    State(state): State<AppState>,
+    user: CurrentUser,
+    Query(query): Query<ListQuery>,
+) -> Result<Json<ApiResponse<PaginatedResponse<Publisher>>>, ApiError> {
+    user.require_admin()?;
+
+    let service = CatalogService::new(state.pg_pool.clone());
+    let publishers = service.list_admin_publishers(query).await?;
 
     Ok(Json(ApiResponse::ok(publishers)))
 }
@@ -220,6 +258,19 @@ async fn list_brands(
     Ok(Json(ApiResponse::ok(brands)))
 }
 
+async fn list_admin_brands(
+    State(state): State<AppState>,
+    user: CurrentUser,
+    Query(query): Query<ListQuery>,
+) -> Result<Json<ApiResponse<PaginatedResponse<Brand>>>, ApiError> {
+    user.require_admin()?;
+
+    let service = CatalogService::new(state.pg_pool.clone());
+    let brands = service.list_admin_brands(query).await?;
+
+    Ok(Json(ApiResponse::ok(brands)))
+}
+
 async fn create_brand(
     State(state): State<AppState>,
     user: CurrentUser,
@@ -265,6 +316,19 @@ async fn list_categories(
 ) -> Result<Json<ApiResponse<Vec<Category>>>, ApiError> {
     let service = CatalogService::new(state.pg_pool.clone());
     let categories = service.list_categories().await?;
+
+    Ok(Json(ApiResponse::ok(categories)))
+}
+
+async fn list_admin_categories(
+    State(state): State<AppState>,
+    user: CurrentUser,
+    Query(query): Query<ListQuery>,
+) -> Result<Json<ApiResponse<PaginatedResponse<Category>>>, ApiError> {
+    user.require_admin()?;
+
+    let service = CatalogService::new(state.pg_pool.clone());
+    let categories = service.list_admin_categories(query).await?;
 
     Ok(Json(ApiResponse::ok(categories)))
 }

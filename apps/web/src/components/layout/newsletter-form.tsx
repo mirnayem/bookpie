@@ -5,6 +5,7 @@ import type { FormEvent } from "react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { trackMetaPixelEvent } from "@/lib/meta-pixel";
 
 export function NewsletterForm() {
   const [email, setEmail] = useState("");
@@ -22,6 +23,7 @@ export function NewsletterForm() {
 
     setError(null);
     setMessage("Subscribed for BookPie updates.");
+    trackMetaPixelEvent("Subscribe", { content_name: "newsletter", status: true });
     setEmail("");
   };
 

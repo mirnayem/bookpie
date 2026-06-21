@@ -42,6 +42,29 @@ impl CatalogRepository {
         rows.into_iter().map(book_from_row).collect()
     }
 
+    pub async fn count_books(&self, search: Option<String>) -> Result<i64, ApiError> {
+        let row = if let Some(search) = search {
+            sqlx::query(
+                r#"
+                SELECT COUNT(DISTINCT b.id)::BIGINT AS total
+                FROM books b
+                JOIN authors a ON a.id = b.author_id
+                JOIN publishers p ON p.id = b.publisher_id
+                WHERE b.title ILIKE $1 OR b.slug ILIKE $1 OR a.name ILIKE $1 OR p.name ILIKE $1
+                "#,
+            )
+            .bind(search)
+            .fetch_one(&self.pool)
+            .await?
+        } else {
+            sqlx::query("SELECT COUNT(*)::BIGINT AS total FROM books")
+                .fetch_one(&self.pool)
+                .await?
+        };
+
+        Ok(row.get("total"))
+    }
+
     pub async fn find_book_by_slug(&self, slug: &str) -> Result<Option<Book>, ApiError> {
         let row = sqlx::query(BOOK_BY_SLUG)
             .bind(slug)
@@ -194,6 +217,30 @@ impl CatalogRepository {
         Ok(rows.into_iter().map(author_from_row).collect())
     }
 
+    pub async fn list_authors_paginated(
+        &self,
+        limit: i64,
+        offset: i64,
+        search: Option<String>,
+    ) -> Result<Vec<Author>, ApiError> {
+        let rows = list_named_entity_rows(
+            &self.pool,
+            "authors",
+            "SELECT id, name, slug FROM authors WHERE name ILIKE $1 OR slug ILIKE $1 ORDER BY name LIMIT $2 OFFSET $3",
+            "SELECT id, name, slug FROM authors ORDER BY name LIMIT $1 OFFSET $2",
+            limit,
+            offset,
+            search,
+        )
+        .await?;
+
+        Ok(rows.into_iter().map(author_from_row).collect())
+    }
+
+    pub async fn count_authors(&self, search: Option<String>) -> Result<i64, ApiError> {
+        count_named_entities(&self.pool, "authors", search).await
+    }
+
     pub async fn create_author(&self, payload: &UpsertAuthorRequest) -> Result<Author, ApiError> {
         let row = sqlx::query(
             "INSERT INTO authors (name, slug) VALUES ($1, $2) RETURNING id, name, slug",
@@ -236,6 +283,30 @@ impl CatalogRepository {
             .fetch_all(&self.pool)
             .await?;
         Ok(rows.into_iter().map(publisher_from_row).collect())
+    }
+
+    pub async fn list_publishers_paginated(
+        &self,
+        limit: i64,
+        offset: i64,
+        search: Option<String>,
+    ) -> Result<Vec<Publisher>, ApiError> {
+        let rows = list_named_entity_rows(
+            &self.pool,
+            "publishers",
+            "SELECT id, name, slug FROM publishers WHERE name ILIKE $1 OR slug ILIKE $1 ORDER BY name LIMIT $2 OFFSET $3",
+            "SELECT id, name, slug FROM publishers ORDER BY name LIMIT $1 OFFSET $2",
+            limit,
+            offset,
+            search,
+        )
+        .await?;
+
+        Ok(rows.into_iter().map(publisher_from_row).collect())
+    }
+
+    pub async fn count_publishers(&self, search: Option<String>) -> Result<i64, ApiError> {
+        count_named_entities(&self.pool, "publishers", search).await
     }
 
     pub async fn create_publisher(
@@ -285,6 +356,38 @@ impl CatalogRepository {
         Ok(rows.into_iter().map(brand_from_row).collect())
     }
 
+    pub async fn list_brands_paginated(
+        &self,
+        limit: i64,
+        offset: i64,
+        search: Option<String>,
+    ) -> Result<Vec<Brand>, ApiError> {
+        let rows = if let Some(search) = search {
+            sqlx::query(
+                "SELECT id, name, slug, logo_url FROM brands WHERE name ILIKE $1 OR slug ILIKE $1 ORDER BY name LIMIT $2 OFFSET $3",
+            )
+            .bind(search)
+            .bind(limit)
+            .bind(offset)
+            .fetch_all(&self.pool)
+            .await?
+        } else {
+            sqlx::query(
+                "SELECT id, name, slug, logo_url FROM brands ORDER BY name LIMIT $1 OFFSET $2",
+            )
+            .bind(limit)
+            .bind(offset)
+            .fetch_all(&self.pool)
+            .await?
+        };
+
+        Ok(rows.into_iter().map(brand_from_row).collect())
+    }
+
+    pub async fn count_brands(&self, search: Option<String>) -> Result<i64, ApiError> {
+        count_named_entities(&self.pool, "brands", search).await
+    }
+
     pub async fn create_brand(&self, payload: &UpsertBrandRequest) -> Result<Brand, ApiError> {
         let row = sqlx::query(
             "INSERT INTO brands (name, slug, logo_url) VALUES ($1, $2, $3) RETURNING id, name, slug, logo_url",
@@ -331,6 +434,36 @@ impl CatalogRepository {
         .fetch_all(&self.pool)
         .await?;
         Ok(rows.into_iter().map(category_from_row).collect())
+    }
+
+    pub async fn list_categories_paginated(
+        &self,
+        limit: i64,
+        offset: i64,
+        search: Option<String>,
+    ) -> Result<Vec<Category>, ApiError> {
+        let rows = if let Some(search) = search {
+            sqlx::query(
+                "SELECT id, name, slug, parent_id, image_url FROM categories WHERE name ILIKE $1 OR slug ILIKE $1 ORDER BY name LIMIT $2 OFFSET $3",
+            )
+            .bind(search)
+            .bind(limit)
+            .bind(offset)
+            .fetch_all(&self.pool)
+            .await?
+        } else {
+            sqlx::query("SELECT id, name, slug, parent_id, image_url FROM categories ORDER BY name LIMIT $1 OFFSET $2")
+                .bind(limit)
+                .bind(offset)
+                .fetch_all(&self.pool)
+                .await?
+        };
+
+        Ok(rows.into_iter().map(category_from_row).collect())
+    }
+
+    pub async fn count_categories(&self, search: Option<String>) -> Result<i64, ApiError> {
+        count_named_entities(&self.pool, "categories", search).await
     }
 
     pub async fn create_category(
@@ -400,6 +533,51 @@ async fn delete_by_id(pool: &PgPool, table: &'static str, id: Uuid) -> Result<()
     }
 
     Ok(())
+}
+
+async fn list_named_entity_rows(
+    pool: &PgPool,
+    _table: &'static str,
+    search_statement: &'static str,
+    list_statement: &'static str,
+    limit: i64,
+    offset: i64,
+    search: Option<String>,
+) -> Result<Vec<PgRow>, ApiError> {
+    let rows = if let Some(search) = search {
+        sqlx::query(search_statement)
+            .bind(search)
+            .bind(limit)
+            .bind(offset)
+            .fetch_all(pool)
+            .await?
+    } else {
+        sqlx::query(list_statement)
+            .bind(limit)
+            .bind(offset)
+            .fetch_all(pool)
+            .await?
+    };
+
+    Ok(rows)
+}
+
+async fn count_named_entities(
+    pool: &PgPool,
+    table: &'static str,
+    search: Option<String>,
+) -> Result<i64, ApiError> {
+    let row = if let Some(search) = search {
+        let statement = format!(
+            "SELECT COUNT(*)::BIGINT AS total FROM {table} WHERE name ILIKE $1 OR slug ILIKE $1"
+        );
+        sqlx::query(&statement).bind(search).fetch_one(pool).await?
+    } else {
+        let statement = format!("SELECT COUNT(*)::BIGINT AS total FROM {table}");
+        sqlx::query(&statement).fetch_one(pool).await?
+    };
+
+    Ok(row.get("total"))
 }
 
 fn book_from_row(row: PgRow) -> Result<Book, ApiError> {

@@ -379,6 +379,29 @@ impl ProfileRepository {
         Ok(rows.into_iter().map(customer_summary_from_row).collect())
     }
 
+    pub async fn count_customers(&self, search: Option<String>) -> Result<i64, ApiError> {
+        let row = if let Some(search) = search {
+            sqlx::query(
+                r#"
+                SELECT COUNT(DISTINCT u.id)::BIGINT AS total
+                FROM users u
+                LEFT JOIN customer_profiles cp ON cp.user_id = u.id
+                WHERE u.role = 'customer'
+                  AND (u.name ILIKE $1 OR u.email ILIKE $1 OR cp.phone ILIKE $1)
+                "#,
+            )
+            .bind(search)
+            .fetch_one(&self.pool)
+            .await?
+        } else {
+            sqlx::query("SELECT COUNT(*)::BIGINT AS total FROM users WHERE role = 'customer'")
+                .fetch_one(&self.pool)
+                .await?
+        };
+
+        Ok(row.get("total"))
+    }
+
     async fn ensure_profile(&self, user_id: UserId) -> Result<(), ApiError> {
         sqlx::query(
             r#"

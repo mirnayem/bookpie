@@ -10,6 +10,7 @@ import {
   removeApiCartItem,
   updateApiCartItem,
 } from "@/lib/storefront-api";
+import { productToMetaPixelPayload, trackMetaPixelEvent } from "@/lib/meta-pixel";
 import { useAuthStore } from "@/stores/auth-store";
 import type { Product } from "@/types/storefront";
 
@@ -51,6 +52,8 @@ export const useCartStore = create<CartUiState>()(
       addItem: (product, quantity = 1) => {
         const safeQuantity = Math.max(1, quantity);
         const token = useAuthStore.getState().tokens?.accessToken;
+        trackMetaPixelEvent("AddToCart", productToMetaPixelPayload(product, safeQuantity));
+
         set((state) => {
           const existing = state.items.find((item) => item.product.id === product.id);
 
@@ -75,6 +78,12 @@ export const useCartStore = create<CartUiState>()(
       updateQuantity: (productId, quantity) => {
         const safeQuantity = Math.max(1, quantity);
         const token = useAuthStore.getState().tokens?.accessToken;
+        const existingItem = get().items.find((item) => item.product.id === productId);
+        const addedQuantity = existingItem ? safeQuantity - existingItem.quantity : 0;
+        if (existingItem && addedQuantity > 0) {
+          trackMetaPixelEvent("AddToCart", productToMetaPixelPayload(existingItem.product, addedQuantity));
+        }
+
         set((state) => ({
           items: state.items.map((item) => (item.product.id === productId ? { ...item, quantity: safeQuantity } : item)),
         }));
@@ -139,6 +148,10 @@ export const useCartStore = create<CartUiState>()(
       toggleWishlist: (product) => {
         set((state) => {
           const exists = state.wishlist.some((item) => item.id === product.id);
+          if (!exists) {
+            trackMetaPixelEvent("AddToWishlist", productToMetaPixelPayload(product));
+          }
+
           return {
             wishlist: exists ? state.wishlist.filter((item) => item.id !== product.id) : [product, ...state.wishlist],
           };

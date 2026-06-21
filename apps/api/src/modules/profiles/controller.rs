@@ -6,7 +6,10 @@ use axum::{
 use uuid::Uuid;
 
 use crate::{
-    error::ApiError, middleware::auth::CurrentUser, response::ApiResponse, state::AppState,
+    error::ApiError,
+    middleware::auth::CurrentUser,
+    response::{ApiResponse, PaginatedResponse},
+    state::AppState,
 };
 
 use super::{
@@ -189,7 +192,7 @@ async fn list_customers(
     State(state): State<AppState>,
     user: CurrentUser,
     Query(query): Query<CustomerListQuery>,
-) -> Result<Json<ApiResponse<Vec<AdminCustomerSummary>>>, ApiError> {
+) -> Result<Json<ApiResponse<PaginatedResponse<AdminCustomerSummary>>>, ApiError> {
     user.require_admin()?;
     let service = ProfileService::new(state.pg_pool.clone());
     let customers = service.list_customers(query).await?;

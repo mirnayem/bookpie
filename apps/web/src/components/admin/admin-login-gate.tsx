@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { LockKeyhole } from "lucide-react";
+import type { FormEvent } from "react";
 import { useForm } from "react-hook-form";
 import { loginRequestSchema, type LoginRequest } from "@bookpie/shared";
 
@@ -26,6 +27,9 @@ export function AdminLoginGate({ children }: AdminLoginGateProps) {
     mutationFn: login,
     onSuccess: (response) => setAuth(response),
   });
+  const submitLogin = form.handleSubmit((payload) => {
+    mutation.mutate(payload);
+  });
 
   if (isAdmin) {
     return children;
@@ -43,9 +47,10 @@ export function AdminLoginGate({ children }: AdminLoginGateProps) {
         </div>
         <form
           className="space-y-4"
-          onSubmit={form.handleSubmit((payload) => {
-            mutation.mutate(payload);
-          })}
+          onSubmit={(event: FormEvent<HTMLFormElement>) => {
+            event.preventDefault();
+            void submitLogin(event);
+          }}
         >
           <label className="block text-sm font-medium">
             Email

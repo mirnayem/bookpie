@@ -3,7 +3,7 @@ use sqlx::PgPool;
 use uuid::Uuid;
 use validator::Validate;
 
-use crate::{error::ApiError, models::ids::UserId};
+use crate::{error::ApiError, models::ids::UserId, response::PaginatedResponse};
 
 use super::{
     model::{
@@ -48,12 +48,21 @@ impl OrderService {
         self.repository.user_order(user_id, order_id).await
     }
 
-    pub async fn admin_orders(&self, query: OrderListQuery) -> Result<Vec<Order>, ApiError> {
+    pub async fn admin_orders(
+        &self,
+        query: OrderListQuery,
+    ) -> Result<PaginatedResponse<Order>, ApiError> {
         let limit = query.limit();
         let offset = query.offset();
-        self.repository
+        let total = self
+            .repository
+            .count_admin_orders(query.status.clone())
+            .await?;
+        let orders = self
+            .repository
             .admin_orders(query.status, limit, offset)
-            .await
+            .await?;
+        Ok(PaginatedResponse::new(orders, total, limit, offset))
     }
 
     pub async fn admin_order(&self, order_id: Uuid) -> Result<Order, ApiError> {

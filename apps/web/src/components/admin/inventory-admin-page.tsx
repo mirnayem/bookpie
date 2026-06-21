@@ -7,6 +7,7 @@ import { useMemo, useState } from "react";
 
 import { AdminAvatar } from "@/components/admin/admin-avatar";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { AdminPagination } from "@/components/admin/admin-pagination";
 import { AdminState } from "@/components/admin/admin-state";
 import { AdminTable } from "@/components/admin/admin-table";
 import { StockForm } from "@/components/admin/stock-form";
@@ -26,12 +27,14 @@ export function InventoryAdminPage() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<StockFilter>("all");
+  const [page, setPage] = useState(1);
   const debouncedSearch = useDebounce(search);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const serverSearch = debouncedSearch.trim().length >= 3 ? debouncedSearch.trim() : undefined;
+  const limit = 20;
   const inventoryQuery = useQuery({
-    queryKey: ["admin", "inventory", serverSearch, filter],
-    queryFn: () => adminApi.inventory(token, { limit: 100, offset: 0, search: serverSearch, stockStatus: filter === "all" ? undefined : filter }),
+    queryKey: ["admin", "inventory", serverSearch, filter, page],
+    queryFn: () => adminApi.inventory(token, { limit, offset: (page - 1) * limit, search: serverSearch, stockStatus: filter === "all" ? undefined : filter }),
     enabled: Boolean(token) && debouncedSearch.trim().length !== 1 && debouncedSearch.trim().length !== 2,
   });
   const movementsQuery = useQuery({ queryKey: ["admin", "inventory", "movements", selectedItem?.bookId], queryFn: () => adminApi.movements(token, selectedItem?.bookId), enabled: Boolean(token && selectedItem) });
@@ -44,14 +47,8 @@ export function InventoryAdminPage() {
     },
   });
   const rows = useMemo(() => {
-    let values = inventoryQuery.data ?? [];
-    if (debouncedSearch.trim().length > 0 && debouncedSearch.trim().length < 3) return values;
-    if (debouncedSearch.trim().length >= 3) {
-      const needle = debouncedSearch.toLowerCase();
-      values = values.filter((item) => `${item.title} ${item.slug}`.toLowerCase().includes(needle));
-    }
-    return values;
-  }, [debouncedSearch, inventoryQuery.data]);
+    return inventoryQuery.data?.items ?? [];
+  }, [inventoryQuery.data?.items]);
 
   if (inventoryQuery.isError) {
     return <AdminState variant="error" title="Inventory failed to load" description={inventoryQuery.error.message} actionLabel="Retry" onAction={() => inventoryQuery.refetch()} />;
@@ -61,8 +58,23 @@ export function InventoryAdminPage() {
     <div className="space-y-6">
       <AdminPageHeader title="Inventory" description="Manage single-warehouse stock and review stock movement history." />
       <div className="grid gap-3 md:grid-cols-[1fr_220px]">
-        <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search inventory by book title or slug" aria-label="Search inventory" />
-        <Select value={filter} onChange={(event) => setFilter(event.target.value as StockFilter)} options={[{ label: "All stock", value: "all" }, { label: "Low stock", value: "low" }, { label: "Out of stock", value: "out" }]} />
+        <Input
+          value={search}
+          onChange={(event) => {
+            setSearch(event.target.value);
+            setPage(1);
+          }}
+          placeholder="Search inventory by book title or slug"
+          aria-label="Search inventory"
+        />
+        <Select
+          value={filter}
+          onChange={(event) => {
+            setFilter(event.target.value as StockFilter);
+            setPage(1);
+          }}
+          options={[{ label: "All stock", value: "all" }, { label: "Low stock", value: "low" }, { label: "Out of stock", value: "out" }]}
+        />
       </div>
       {rows.length ? (
         <AdminTable
@@ -100,6 +112,7 @@ export function InventoryAdminPage() {
       ) : (
         <AdminState title="No inventory items found" description="Adjust the search or stock filter." />
       )}
+      <AdminPagination pagination={inventoryQuery.data?.pagination} isFetching={inventoryQuery.isFetching} onPageChange={setPage} />
       <Modal open={Boolean(selectedItem)} title={selectedItem ? `Update stock: ${selectedItem.title}` : "Update stock"} onOpenChange={(open) => !open && setSelectedItem(null)}>
         {selectedItem ? <StockForm key={selectedItem.bookId} stock={selectedItem.stock} busy={updateMutation.isPending} onSubmit={(payload) => updateMutation.mutate(payload)} /> : null}
         {updateMutation.error ? <p className="mt-4 text-sm text-primary">{updateMutation.error.message}</p> : null}

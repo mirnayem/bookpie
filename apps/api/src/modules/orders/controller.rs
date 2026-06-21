@@ -6,7 +6,10 @@ use axum::{
 use uuid::Uuid;
 
 use crate::{
-    error::ApiError, middleware::auth::CurrentUser, response::ApiResponse, state::AppState,
+    error::ApiError,
+    middleware::auth::CurrentUser,
+    response::{ApiResponse, PaginatedResponse},
+    state::AppState,
 };
 
 use super::{
@@ -152,7 +155,7 @@ async fn admin_orders(
     State(state): State<AppState>,
     user: CurrentUser,
     Query(query): Query<OrderListQuery>,
-) -> Result<Json<ApiResponse<Vec<Order>>>, ApiError> {
+) -> Result<Json<ApiResponse<PaginatedResponse<Order>>>, ApiError> {
     user.require_admin()?;
     let service = OrderService::new(state.pg_pool.clone());
     let orders = service.admin_orders(query).await?;

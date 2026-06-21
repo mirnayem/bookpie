@@ -6,6 +6,7 @@ import { Eye } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { AdminPagination } from "@/components/admin/admin-pagination";
 import { AdminState } from "@/components/admin/admin-state";
 import { AdminTable } from "@/components/admin/admin-table";
 import { AdminBadge } from "@/components/admin/admin-badge";
@@ -20,12 +21,14 @@ import { useAuthStore } from "@/stores/auth-store";
 export function CustomersAdminPage() {
   const token = useAuthStore((state) => state.tokens?.accessToken ?? null);
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
   const [selectedCustomer, setSelectedCustomer] = useState<AdminCustomerSummary | null>(null);
   const debouncedSearch = useDebounce(search);
   const serverSearch = debouncedSearch.trim().length >= 3 ? debouncedSearch.trim() : undefined;
+  const limit = 20;
   const customersQuery = useQuery({
-    queryKey: ["admin", "customers", serverSearch],
-    queryFn: () => adminApi.customers(token, { limit: 100, offset: 0, search: serverSearch }),
+    queryKey: ["admin", "customers", serverSearch, page],
+    queryFn: () => adminApi.customers(token, { limit, offset: (page - 1) * limit, search: serverSearch }),
     enabled: Boolean(token) && debouncedSearch.trim().length !== 1 && debouncedSearch.trim().length !== 2,
   });
   const customerDetailQuery = useQuery({
@@ -34,12 +37,8 @@ export function CustomersAdminPage() {
     enabled: Boolean(token && selectedCustomer),
   });
   const rows = useMemo(() => {
-    const values = customersQuery.data ?? [];
-    if (debouncedSearch.trim().length > 0 && debouncedSearch.trim().length < 3) return values;
-    if (debouncedSearch.trim().length < 3) return values;
-    const needle = debouncedSearch.toLowerCase();
-    return values.filter((customer) => `${customer.name} ${customer.email} ${customer.phone ?? ""}`.toLowerCase().includes(needle));
-  }, [customersQuery.data, debouncedSearch]);
+    return customersQuery.data?.items ?? [];
+  }, [customersQuery.data?.items]);
 
   if (customersQuery.isError) {
     return <AdminState variant="error" title="Customers failed to load" description={customersQuery.error.message} actionLabel="Retry" onAction={() => customersQuery.refetch()} />;
@@ -48,7 +47,15 @@ export function CustomersAdminPage() {
   return (
     <div className="space-y-6">
       <AdminPageHeader title="Customers" description="View customer profile, contact, address, and order follow-up context." />
-      <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search customers by name, email, or phone" aria-label="Search customers" />
+      <Input
+        value={search}
+        onChange={(event) => {
+          setSearch(event.target.value);
+          setPage(1);
+        }}
+        placeholder="Search customers by name, email, or phone"
+        aria-label="Search customers"
+      />
       {rows.length ? (
         <AdminTable
           rows={rows}
@@ -76,6 +83,7 @@ export function CustomersAdminPage() {
       ) : (
         <AdminState title="No customers found" description="Customer accounts will appear after registration." />
       )}
+      <AdminPagination pagination={customersQuery.data?.pagination} isFetching={customersQuery.isFetching} onPageChange={setPage} />
       <Modal open={Boolean(selectedCustomer)} title={selectedCustomer?.name ?? "Customer"} onOpenChange={(open) => !open && setSelectedCustomer(null)} className="max-w-3xl">
         {customerDetailQuery.data ? (
           <CustomerProfileDetail

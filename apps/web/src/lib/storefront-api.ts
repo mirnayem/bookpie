@@ -6,6 +6,7 @@ import type {
   CreateOrderRequest,
   CustomerAddress,
   Order,
+  PaginatedResponse,
   UpsertAddressRequest,
   ValidateCouponRequest,
 } from "@bookpie/shared";
@@ -56,8 +57,8 @@ export async function storefrontRequest<T>(path: string, options: RequestOptions
 
 export async function getStorefrontBooks(limit = 100) {
   try {
-    const books = await storefrontRequest<Book[]>(`/books?limit=${limit}&offset=0`);
-    return books.map(bookToProduct);
+    const response = await storefrontRequest<PaginatedResponse<Book>>(`/books?limit=${limit}&offset=0`);
+    return response.items.map(bookToProduct);
   } catch {
     return fallbackProducts;
   }

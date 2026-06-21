@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { formatTaka } from "@/lib/format";
+import { cartLinesToMetaPixelPayload, trackMetaPixelEvent } from "@/lib/meta-pixel";
 import { createApiAddress, createApiOrder, validateApiCoupon } from "@/lib/storefront-api";
 import { useAuthStore } from "@/stores/auth-store";
 import { useCartStore } from "@/stores/cart-store";
@@ -153,6 +154,7 @@ export function CheckoutPage() {
 
     try {
       await syncCart();
+      trackMetaPixelEvent("AddPaymentInfo", cartLinesToMetaPixelPayload(items, currentTotal));
       const address = await createApiAddress(tokens.accessToken, {
         label: values.addressPreset === "custom" ? "Checkout" : values.addressPreset,
         recipientName: values.name,
@@ -172,6 +174,10 @@ export function CheckoutPage() {
       });
 
       setOrderNumber(order.id.slice(0, 8).toUpperCase());
+      trackMetaPixelEvent("Purchase", {
+        ...cartLinesToMetaPixelPayload(items, currentTotal),
+        order_id: order.id,
+      });
       clearCart();
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : "অর্ডার সম্পন্ন করা যায়নি।");
