@@ -1,0 +1,11 @@
+CREATE INDEX IF NOT EXISTS idx_books_slug_active ON books(slug) WHERE is_active = true;
+CREATE INDEX IF NOT EXISTS idx_books_category_id_active ON books(category_id) WHERE is_active = true;
+CREATE INDEX IF NOT EXISTS idx_books_author_id_active ON books(author_id) WHERE is_active = true;
+CREATE INDEX IF NOT EXISTS idx_books_publisher_id_active ON books(publisher_id) WHERE is_active = true;
+CREATE INDEX IF NOT EXISTS idx_books_sale_price ON books(sale_price);
+CREATE INDEX IF NOT EXISTS idx_orders_user_created_at ON orders(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_orders_status_created_at ON orders(status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_orders_payment_status ON orders(payment_status);
+CREATE INDEX IF NOT EXISTS idx_order_items_book_id ON order_items(book_id);
+CREATE INDEX IF NOT EXISTS idx_delivery_assignments_status ON delivery_assignments(status);
+CREATE INDEX IF NOT EXISTS idx_stock_movements_book_created_at ON stock_movements(book_id, created_at DESC);

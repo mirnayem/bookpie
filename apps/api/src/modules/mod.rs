@@ -1,4 +1,5 @@
 pub mod admin;
+pub mod analytics;
 pub mod auth;
 pub mod books;
 pub mod carts;
@@ -8,4 +9,5 @@ pub mod notifications;
 pub mod orders;
 pub mod profiles;
 pub mod promotions;
+pub mod reviews;
 pub mod search;

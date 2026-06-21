@@ -21,6 +21,8 @@ pub enum ApiError {
     Validation(String),
     #[error("search error: {0}")]
     Search(String),
+    #[error("too many requests")]
+    RateLimited,
     #[error("postgres error: {0}")]
     Sqlx(#[from] sqlx::Error),
     #[error("redis error: {0}")]
@@ -46,6 +48,7 @@ impl ApiError {
             Self::Conflict(_) => StatusCode::CONFLICT,
             Self::Validation(_) => StatusCode::UNPROCESSABLE_ENTITY,
             Self::Search(_) => StatusCode::BAD_GATEWAY,
+            Self::RateLimited => StatusCode::TOO_MANY_REQUESTS,
             Self::Config(_)
             | Self::Sqlx(_)
             | Self::Redis(_)
@@ -66,6 +69,7 @@ impl ApiError {
             Self::Conflict(_) => "CONFLICT",
             Self::Validation(_) => "VALIDATION_ERROR",
             Self::Search(_) => "SEARCH_ERROR",
+            Self::RateLimited => "RATE_LIMITED",
             Self::Sqlx(_) => "DATABASE_ERROR",
             Self::Redis(_) => "REDIS_ERROR",
             Self::Http(_) => "HTTP_ERROR",

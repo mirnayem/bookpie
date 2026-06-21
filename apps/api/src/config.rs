@@ -23,6 +23,13 @@ impl Config {
         let app_env = env_source.string("APP_ENV", "development");
         let env_source = env_source.with_env_file(&app_env);
 
+        let jwt_secret = env_source.required("JWT_SECRET")?;
+        if app_env == "production" && jwt_secret.len() < 32 {
+            return Err(ApiError::Config(
+                "JWT_SECRET must be at least 32 characters in production".to_string(),
+            ));
+        }
+
         Ok(Self {
             app_env,
             api_host: env_source.string("API_HOST", "127.0.0.1").parse()?,
@@ -32,7 +39,7 @@ impl Config {
             meili_url: env_source.string("MEILI_URL", "http://127.0.0.1:7700"),
             meili_api_key: env_source.optional("MEILI_API_KEY"),
             meili_books_index: env_source.string("MEILI_BOOKS_INDEX", "books"),
-            jwt_secret: env_source.required("JWT_SECRET")?,
+            jwt_secret,
             jwt_issuer: env_source.string("JWT_ISSUER", "bookpie-api"),
             cors_origins: env_source
                 .string("CORS_ORIGINS", "http://localhost:3000")

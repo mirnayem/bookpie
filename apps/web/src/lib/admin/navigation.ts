@@ -12,6 +12,8 @@ import {
   PenLine,
   Building2,
   BadgeCheck,
+  Gift,
+  Warehouse,
 } from "lucide-react";
 
 export const adminNavItems = [
@@ -24,6 +26,8 @@ export const adminNavItems = [
   { label: "Orders", href: "/admin/orders", icon: ClipboardList },
   { label: "Customers", href: "/admin/customers", icon: UsersRound },
   { label: "Inventory", href: "/admin/inventory", icon: Boxes },
+  { label: "Warehouse", href: "/admin/warehouse", icon: Warehouse },
+  { label: "Promotions", href: "/admin/promotions", icon: Gift },
   { label: "Delivery", href: "/admin/delivery", icon: Truck },
   { label: "Reports", href: "/admin/reports", icon: BarChart3 },
   { label: "Settings", href: "/admin/settings", icon: Settings },

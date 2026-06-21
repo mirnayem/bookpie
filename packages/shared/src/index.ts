@@ -1,4 +1,5 @@
 export * from "./schemas/admin";
+export * from "./schemas/analytics";
 export * from "./schemas/auth";
 export * from "./schemas/book";
 export * from "./schemas/cart";
@@ -9,5 +10,6 @@ export * from "./schemas/order";
 export * from "./schemas/profile";
 export * from "./schemas/promotion";
 export * from "./schemas/response";
+export * from "./schemas/review";
 export * from "./schemas/search";
 export * from "./schemas/user";

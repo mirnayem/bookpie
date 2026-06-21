@@ -11,6 +11,8 @@
     "api:dev": "cargo run -p api",
     "api:check": "cargo check -p api",
     "api:clippy": "cargo clippy -p api --all-targets --all-features",
+    "launch:smoke": "node scripts/launch-smoke.mjs",
+    "load:test": "node scripts/load-test.mjs",
     "web:dev": "pnpm --filter @bookpie/web dev",
     "web:build": "pnpm --filter @bookpie/web build",
     "web:lint": "pnpm --filter @bookpie/web lint",

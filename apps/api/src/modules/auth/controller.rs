@@ -35,6 +35,15 @@ pub fn auth_router() -> Router<AppState> {
         .route("/admin/users/{user_id}", patch(admin_update_user))
 }
 
+pub fn mobile_auth_router() -> Router<AppState> {
+    Router::new()
+        .route("/register", post(register))
+        .route("/login", post(login))
+        .route("/refresh", post(refresh))
+        .route("/otp", post(request_otp))
+        .route("/otp/verify", post(verify_otp))
+}
+
 async fn register(
     State(state): State<AppState>,
     Json(payload): Json<RegisterRequest>,
